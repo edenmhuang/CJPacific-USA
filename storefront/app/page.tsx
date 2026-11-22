@@ -121,7 +121,7 @@ function ProductCard({ p, onOpen }: { p: Product; onOpen: (id: string, el: HTMLE
     <article className="product">
       <button type="button" className="product-open" aria-label={`View details for ${p.title}`} onClick={(e) => onOpen(p.id, e.currentTarget)}><Photo src={p.thumbnail} alt={p.title} category={category} /></button>
       <div className="product-body">
-        <div className="product-top"><small>{category}</small><span>{v.sku}</span></div>
+        <div className="product-top"><small>{category}</small></div>
         <h3><button type="button" className="product-name" onClick={(e) => onOpen(p.id, e.currentTarget)}>{p.title}</button></h3>
         {pack && <p className="product-pack">{pack}</p>}
         <div className="product-bottom">

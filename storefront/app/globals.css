@@ -19,7 +19,6 @@
 .cj-main{animation:cjFade .3s cubic-bezier(.22,1,.36,1) both}.cj-grid{animation:cjFade .26s ease both}.cj-feedback,.callout{animation:cjFade .24s ease both}.cj .empty{animation:cjFade .32s cubic-bezier(.22,1,.36,1) both}
 .orderrow svg{transition:transform .2s ease}.orderrow:hover svg{transform:translateX(3px)}
 @keyframes cjFade{from{opacity:0;transform:translateY(6px)}}
-@keyframes cjRoll{from{opacity:0;transform:translateY(55%)}}
 @keyframes cjPop{0%{transform:scale(.6)}60%{transform:scale(1.18)}100%{transform:scale(1)}}
 @media (prefers-reduced-motion:reduce){.cj *,.cj *::before,.cj *::after{animation:none!important;transition-duration:.01ms!important}}
 @container (max-width:1050px){.cj-nav a{padding-inline:8px}.cj-head-inner{gap:13px}.cj-main.browse{--side:200px}.cj-grid{grid-template-columns:repeat(auto-fill,minmax(min(100%,185px),1fr))}}

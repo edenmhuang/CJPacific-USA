@@ -1,15 +1,10 @@
-import { authenticate, configureStoreSearch, defineMiddlewares, validateAndTransformBody } from '@medusajs/framework/http'
+import { authenticate, defineMiddlewares, validateAndTransformBody } from '@medusajs/framework/http'
 import { StageBody } from './admin/orders/[id]/cj-stage/route'
 import { requireBusinessCart } from './store/cj/require-business'
 import { requireInStockCart, requireInStockLine } from './store/cj/require-in-stock'
 
 export default defineMiddlewares({
   routes: [
-    {
-      method: ['POST'],
-      matcher: '/store/search',
-      middlewares: [configureStoreSearch({ allowed_indexes: { product: true } })],
-    },
     {
       // Only signed-in business accounts can turn a cart into an order.
       method: ['POST'],

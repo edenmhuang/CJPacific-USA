@@ -22,7 +22,6 @@ Medusa DTC Starter — a Turborepo workspace monorepo containing a Medusa backen
 | Custom data model + service | `apps/backend/src/modules/<name>/` | `@medusajs/framework` (`/utils`) |
 | Extend a commerce module (product, cart, order...) | `apps/backend/src/links/` | `@medusajs/<module>` (e.g. `@medusajs/product`) |
 | Events / cron | `apps/backend/src/subscribers/`, `apps/backend/src/jobs/` | `@medusajs/framework` |
-| Product search index | `apps/backend/src/search/` | `@medusajs/framework` (`/types` `SearchTypes`) |
 | One-off scripts | `apps/backend/src/scripts/` (run with `medusa exec`) | `@medusajs/cli` |
 | Admin widgets / pages | `apps/backend/src/admin/` | `@medusajs/admin-sdk`, `@medusajs/ui`, `@medusajs/icons` |
 | Module/plugin config | `apps/backend/medusa-config.ts` | `@medusajs/framework` |
@@ -46,8 +45,7 @@ Medusa DTC Starter — a Turborepo workspace monorepo containing a Medusa backen
 │   │       ├── links/            # Module links between modules
 │   │       ├── migration-scripts/# Data migrations run by db:migrate (e.g. initial-data-seed.ts)
 │   │       ├── modules/          # Custom modules (service + models + migrations)
-│   │       ├── scripts/          # medusa exec scripts (e.g. seed-demo-products.ts)
-│   │       ├── search/           # Product search index definition
+│   │       ├── scripts/          # medusa exec scripts
 │   │       ├── subscribers/      # Event subscribers
 │   │       └── workflows/        # Workflows and workflow steps
 │   └── storefront/               # OPTIONAL Next.js storefront (@dtc/storefront)
@@ -86,7 +84,6 @@ Run from the repo root unless noted. Turbo skips missing apps automatically.
 ```bash
 <pm> run dev                # all apps
 <pm> run backend:dev        # backend only (http://localhost:9000, admin at /app)
-<pm> run storefront:dev     # storefront only (http://localhost:8000)
 ```
 
 ### Build
@@ -128,7 +125,6 @@ cd apps/backend
 <pm> exec medusa db:generate <module-name>   # generate migrations for a custom module
 <pm> exec medusa db:migrate                  # run migrations + migration-scripts (initial data seed)
 <pm> exec medusa user -e admin@test.com -p supersecret
-<pm> exec medusa exec ./src/scripts/seed-demo-products.ts   # optional demo products
 ```
 
 ## Medusa Package Docs (`node_modules`)

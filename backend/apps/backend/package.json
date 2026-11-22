@@ -13,7 +13,7 @@
     "medusa"
   ],
   "scripts": {
-    "build": "medusa build",
+    "build": "medusa build && node -e \"require('fs').cpSync('static','.medusa/server/static',{recursive:true})\"",
     "start": "medusa start",
     "dev": "medusa develop",
     "lint": "medusa lint",

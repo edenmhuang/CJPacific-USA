@@ -8,12 +8,12 @@ export type Customer = {
 }
 export type Variant = { id: string; title: string; sku: string | null; calculated_price?: { calculated_amount: number } }
 export type Product = {
-  id: string; title: string; handle: string; thumbnail: string | null; description?: string | null
-  metadata?: { pack?: string; unit?: string } | null; categories?: { id: string; name: string }[]; variants: Variant[]
+  id: string; title: string; subtitle?: string | null; handle: string; thumbnail: string | null; description?: string | null
+  metadata?: Record<string, unknown> | null; categories?: { id: string; name: string }[]; variants: Variant[]
 }
 export type Category = { id: string; name: string; rank: number }
 export type LineItem = {
-  id: string; variant_id: string; product_title: string; variant_title: string; thumbnail: string | null
+  id: string; variant_id: string; product_title: string; product_subtitle?: string | null; variant_title: string; thumbnail: string | null
   quantity: number; unit_price: number; total?: number; product_handle?: string
 }
 export type Cart = { id: string; customer_id: string | null; items: LineItem[]; item_total: number; total: number }

@@ -1,31 +1,41 @@
 "use client"
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useStore } from "@/app/store"
 import { Icon } from "./Icon"
 
+const NAV = [
+  { href: "/", label: "Catalog" },
+  { href: "/orders", label: "Orders", icon: "order" },
+  { href: "/account", label: "Account", icon: "user" },
+  { href: "/contact", label: "Contact" },
+]
+
 export function Header() {
-  const { cart, customer } = useStore()
+  const { count, query, setQuery } = useStore()
   const path = usePathname()
-  const count = cart?.items.reduce((n, i) => n + i.quantity, 0) ?? 0
-  const nav = [
-    { href: "/", label: "Catalog", icon: "all" },
-    { href: "/orders", label: "Orders", icon: "order" },
-    { href: "/account", label: customer ? customer.company_name || "Account" : "Sign in", icon: "user" },
-  ]
+  const router = useRouter()
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h))
   return (
-    <header className="top">
-      <div className="top-in">
-        <Link href="/" className="brand"><span className="mark">CJ</span><span>CJPacific USA</span></Link>
-        <nav className="nav">
-          {nav.map((n) => (
-            <Link key={n.href} href={n.href} className={active(n.href) ? "on" : ""}><Icon n={n.icon} size={18} /><span>{n.label}</span></Link>
+    <header className="cj-header">
+      <div className="cj-head-inner">
+        <Link href="/" className="brand" aria-label="CJPacific USA catalog"><span>CJPacific <small>USA</small></span></Link>
+        <label className="cj-search">
+          <Icon n="search" size={18} />
+          <input aria-label="Search products" placeholder="Search products, categories, or SKUs" value={query}
+            onChange={(e) => { setQuery(e.target.value); if (path !== "/") router.push("/") }} />
+          {query && <button type="button" aria-label="Clear search" onClick={() => setQuery("")}>×</button>}
+        </label>
+        <nav className="cj-nav" aria-label="Main navigation">
+          {NAV.map((n) => (
+            <Link key={n.href} href={n.href} className={active(n.href) ? "active" : ""} aria-current={active(n.href) ? "page" : undefined}>
+              {n.icon && <Icon n={n.icon} size={17} />}<span>{n.label}</span>
+            </Link>
           ))}
+          <Link href="/cart" className={`cartnav${active("/cart") ? " active" : ""}`} aria-current={active("/cart") ? "page" : undefined} aria-label={`Cart, ${count} items`}>
+            <Icon n="bag" size={17} /><span>Cart</span>{count > 0 && <b key={count} className="pop">{count}</b>}
+          </Link>
         </nav>
-        <Link href="/cart" className={`cartbtn ${active("/cart") ? "on" : ""}`} aria-label={`Cart, ${count} items`}>
-          <Icon n="bag" size={18} /><span>{count > 0 ? count : "Cart"}</span>
-        </Link>
       </div>
     </header>
   )

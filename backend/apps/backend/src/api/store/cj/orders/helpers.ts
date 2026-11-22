@@ -4,7 +4,7 @@ import { CUSTOMER_CANCEL_BEFORE, isPickup, stageLabels } from "../../../../lib/o
 
 export const FIELDS = [
   "id", "display_id", "email", "status", "created_at", "total", "item_total", "currency_code", "metadata", "customer_id",
-  "items.id", "items.title", "items.product_title", "items.product_handle", "items.variant_id", "items.variant_title", "items.variant_sku",
+  "items.id", "items.title", "items.product_title", "items.product_handle", "items.variant_id", "items.variant_title", "items.product_subtitle", "items.variant_sku",
   "items.thumbnail", "items.quantity", "items.unit_price", "shipping_address.*", "shipping_methods.name",
 ]
 

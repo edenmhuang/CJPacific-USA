@@ -6,6 +6,7 @@ import { day, money } from "@/lib/format"
 import type { Order } from "@/lib/types"
 import { useStore } from "../store"
 import { Icon } from "@/components/Icon"
+import { Page, Title } from "@/components/Page"
 
 export default function OrdersPage() {
   const { customer, ready } = useStore()
@@ -17,28 +18,31 @@ export default function OrdersPage() {
     api<{ orders: Order[] }>("/store/cj/orders").then((d) => setOrders(d.orders)).catch((e) => setErr(e.message))
   }, [customer?.id])
 
-  if (!ready) return <div className="narrow"><div className="card skeleton tall" /></div>
+  if (!ready) return <Page><div /></Page>
   if (!customer) return (
-    <div className="narrow center"><div className="bigicon"><Icon n="order" size={30} /></div><h1>Your orders</h1>
-      <Link className="primary" href="/account?next=/orders">Sign in</Link></div>
+    <Page>
+      <div className="surface empty"><Icon n="user" size={28} /><h2>Sign in to see your orders</h2><p>Orders are only available in your business account.</p>
+        <Link className="primary" href="/account?next=/orders">Sign in</Link></div>
+    </Page>
   )
   return (
-    <div className="narrow wide">
-      <h1>Orders</h1>
-      {err && <p className="notice">{err}</p>}
-      {!orders && !err && <div className="card skeleton tall" />}
-      {orders?.length === 0 && <p className="empty">No orders yet. <Link href="/">Browse the catalog</Link></p>}
-      <ul className="orderlist">
-        {orders?.map((o) => (
-          <li key={o.id}>
-            <Link href={`/orders/${o.id}`}>
-              <div className="grow"><b>{o.ref}</b><span className="dim">{day(o.created_at)} · {o.fulfillment === "pickup" ? "Pickup" : "Delivery"} · {o.items.reduce((n, i) => n + i.quantity, 0)} units</span></div>
-              <span className={`pill ${o.canceled ? "bad" : o.stage >= 4 ? "done" : ""}`}>{o.status}</span>
-              <b className="amt">{money(o.total)}</b>
+    <Page>
+      <Title eyebrow="YOUR BUSINESS" name="Orders" sub="Track an order or rebuild it in your cart." />
+      {err && <p className="notice" role="alert">{err}</p>}
+      {orders && !orders.length ? (
+        <div className="surface empty"><Icon n="order" size={28} /><h2>No orders yet</h2><p>Place an order and you’ll be able to track or reorder it here.</p><Link className="primary" href="/">Browse catalog</Link></div>
+      ) : orders && (
+        <div className="surface orderlist">
+          {orders.map((o) => (
+            <Link key={o.id} href={`/orders/${o.id}`} className="orderrow">
+              <span><b>{o.ref}</b><small>{o.fulfillment === "pickup" ? "Pickup" : "Delivery"} · {day(o.created_at)}</small></span>
+              <span><b>{money(o.total)}</b><small>{o.items.length} items</small></span>
+              <span className={o.canceled ? "pill quiet" : "pill"}>{o.status}</span>
+              <Icon n="arrow" size={17} />
             </Link>
-          </li>
-        ))}
-      </ul>
-    </div>
+          ))}
+        </div>
+      )}
+    </Page>
   )
 }

@@ -13,14 +13,13 @@ import {
  * Photos uploaded in Admin replace them.
  */
 const CATEGORIES = ["Seafood", "Meat", "Vegetables", "Grains", "Seasoning/Sauces", "Dry Foods", "Supplies"];
-const PRODUCTS: { handle: string; title: string; category: string; price: number; pack: string; unit: string; sku: string; image: string }[] = [
+const PRODUCTS: { handle: string; title: string; category: string; price: number; pack: string; sku: string; image: string }[] = [
   {
     "handle": "salmon",
     "title": "Atlantic salmon fillets",
     "category": "Seafood",
-    "price": 12.8,
+    "price": 128.0,
     "pack": "10 lb case",
-    "unit": "lb",
     "sku": "SF-101",
     "image": "cj-sample-salmon-v1.jpg"
   },
@@ -28,9 +27,8 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "handle": "shrimp",
     "title": "Peeled white shrimp",
     "category": "Seafood",
-    "price": 8.4,
-    "pack": "5 lb bag \u00b7 21/25 count",
-    "unit": "lb",
+    "price": 42.0,
+    "pack": "5 lb bag",
     "sku": "SF-102",
     "image": "cj-sample-shrimp-v1.jpg"
   },
@@ -38,9 +36,8 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "handle": "chicken",
     "title": "Boneless chicken thigh",
     "category": "Meat",
-    "price": 6.2,
+    "price": 62.0,
     "pack": "10 kg case",
-    "unit": "kg",
     "sku": "MT-101",
     "image": "cj-sample-chicken-v1.jpg"
   },
@@ -48,9 +45,8 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "handle": "beef",
     "title": "Sliced beef short plate",
     "category": "Meat",
-    "price": 10.9,
+    "price": 54.5,
     "pack": "5 lb pack",
-    "unit": "lb",
     "sku": "MT-102",
     "image": "cj-sample-beef-v1.jpg"
   },
@@ -58,9 +54,8 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "handle": "broccoli",
     "title": "Broccoli florets",
     "category": "Vegetables",
-    "price": 3.85,
+    "price": 19.25,
     "pack": "5 kg case",
-    "unit": "kg",
     "sku": "VG-101",
     "image": "cj-sample-broccoli-v1.jpg"
   },
@@ -70,7 +65,6 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "category": "Vegetables",
     "price": 4.8,
     "pack": "1 kg bag",
-    "unit": "item",
     "sku": "VG-102",
     "image": "cj-sample-edamame-v1.jpg"
   },
@@ -80,7 +74,6 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "category": "Grains",
     "price": 25.9,
     "pack": "25 lb bag",
-    "unit": "item",
     "sku": "GR-101",
     "image": "cj-sample-rice-v1.jpg"
   },
@@ -90,7 +83,6 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "category": "Seasoning/Sauces",
     "price": 18.9,
     "pack": "56 fl oz tin",
-    "unit": "item",
     "sku": "SS-101",
     "image": "kadoya-sesame-oil-v1.jpg"
   },
@@ -100,7 +92,6 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "category": "Dry Foods",
     "price": 15.9,
     "pack": "1 lb bag",
-    "unit": "lb",
     "sku": "DF-101",
     "image": "cj-sample-shiitake-v1.jpg"
   },
@@ -110,7 +101,6 @@ const PRODUCTS: { handle: string; title: string; category: string; price: number
     "category": "Supplies",
     "price": 14.5,
     "pack": "50 count sleeve",
-    "unit": "item",
     "sku": "SP-101",
     "image": "cj-sample-containers-v1.jpg"
   }
@@ -184,11 +174,11 @@ export default async function initial_data_seed({ container }: { container: Medu
         title: p.title, handle: p.handle, status: ProductStatus.PUBLISHED,
         category_ids: [categories.find((c) => c.name === p.category)!.id],
         shipping_profile_id: profile.id, thumbnail: IMG(p.image), images: [{ url: IMG(p.image) }],
-        metadata: { pack: p.pack, unit: p.unit, sample: true },
+        subtitle: p.pack, metadata: { sample: true },
         options: [{ id: packOption.id }],
         variants: [{
           title: p.pack, sku: p.sku, manage_inventory: false, options: { Pack: p.pack },
-          metadata: { unit: p.unit }, prices: [{ amount: p.price, currency_code: "usd" }],
+          prices: [{ amount: p.price, currency_code: "usd" }],
         }],
         sales_channels: [{ id: channel.id }],
       })),

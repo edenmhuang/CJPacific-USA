@@ -19,7 +19,7 @@ function business(o: Order) {
 
 function lines(o: Order) {
   return (o.items ?? []).map((i: any) => ({
-    qty: i.quantity, title: i.product_title || i.title, pack: i.variant_title || "", sku: i.variant_sku || "",
+    qty: i.quantity, title: i.product_title || i.title, pack: i.product_subtitle || (/^default/i.test(i.variant_title || "") ? "" : i.variant_title || ""), sku: i.variant_sku || "",
     unit: i.unit_price, total: Number(i.unit_price) * Number(i.quantity),
   }))
 }
@@ -100,6 +100,6 @@ export function stageUpdate(o: Order, stage: number) {
 
 export const ORDER_EMAIL_FIELDS = [
   "id", "display_id", "email", "status", "created_at", "currency_code", "total", "item_total", "metadata", "customer_id",
-  "items.title", "items.product_title", "items.variant_title", "items.variant_sku", "items.quantity", "items.unit_price",
+  "items.title", "items.product_title", "items.variant_title", "items.product_subtitle", "items.variant_sku", "items.quantity", "items.unit_price",
   "shipping_address.*", "shipping_methods.name", "customer.first_name", "customer.last_name", "customer.company_name", "customer.phone",
 ]

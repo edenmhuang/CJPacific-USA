@@ -2,6 +2,15 @@ import { loadEnv, defineConfig } from '@medusajs/framework/utils'
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd())
 
+/** In production, refuse to start with a missing or placeholder secret (Medusa would otherwise fall back to a public default). */
+function secret(name: string) {
+  const value = process.env[name]
+  if (process.env.NODE_ENV === 'production' && (!value || value.startsWith('change-me') || value.length < 32)) {
+    throw new Error(`${name} must be set to a random value of at least 32 characters (openssl rand -hex 32).`)
+  }
+  return value
+}
+
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -10,8 +19,8 @@ module.exports = defineConfig({
       storeCors: process.env.STORE_CORS!,
       adminCors: process.env.ADMIN_CORS!,
       authCors: process.env.AUTH_CORS!,
-      jwtSecret: process.env.JWT_SECRET,
-      cookieSecret: process.env.COOKIE_SECRET,
+      jwtSecret: secret('JWT_SECRET'),
+      cookieSecret: secret('COOKIE_SECRET'),
     }
   },
   admin: {

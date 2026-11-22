@@ -14,6 +14,7 @@ const paths: Record<string, string> = {
   plus: "M12 5v14 M5 12h14", minus: "M5 12h14", check: "M5 12l4 4L19 6",
   mail: "M3 5h18v14H3z M3 6l9 7 9-7", back: "M15 6l-6 6 6 6", arrow: "M4 12h15 M13 6l6 6-6 6",
   truck: "M2 5h13v12H2z M15 9h4l3 4v4h-7 M8 18a2 2 0 1 1-4 0 2 2 0 1 1 4 0 M20 18a2 2 0 1 1-4 0 2 2 0 1 1 4 0",
+  info: "M12 21a9 9 0 1 1 0-18 9 9 0 0 1 0 18z M12 11v5 M12 8h.01",
   store: "M4 10v10h16V10 M3 10l2-6h14l2 6z M10 20v-5h4v5",
 }
 export function Icon({ n, size = 20 }: { n: string; size?: number }) {

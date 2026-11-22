@@ -1,10 +1,8 @@
 "use client"
 import { useState } from "react"
-import { CONTACT_EMAIL, CONTACT_PHONE, STORE_ADDRESS } from "@/lib/format"
+import { ABOUT, CONTACT_EMAIL, CONTACT_PHONE, STORE_ADDRESS } from "@/lib/format"
 import { Icon } from "@/components/Icon"
 import { Req, Page, Title } from "@/components/Page"
-
-const ABOUT = "富泉贸易公司成立于1983年，主要提供各类型高质量的食品，包括干货、冷冻海鲜、肉类和餐馆用品。三十多年来，我们重视客户满意度，通过提供优质的产品和出色的客户服务来维护长期的客户关系。我们与供应商紧密合作，确保所有产品符合美国的食品安全标准和客户的要求。"
 
 export default function Contact() {
   const [msg, setMsg] = useState({ name: "", email: "", text: "" })

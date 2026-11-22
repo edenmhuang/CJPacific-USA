@@ -1,4 +1,5 @@
 "use client"
+import Link from "next/link"
 import { Footer } from "@/components/Footer"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { api } from "@/lib/api"
@@ -65,6 +66,7 @@ export default function Catalog() {
         {categories.map((c) => (
           <button key={c.id} className={cat === c.id ? "chosen" : ""} aria-pressed={cat === c.id} onClick={() => setCat(c.id)}><Icon n={c.name} size={19} />{c.name}</button>
         ))}
+        <Link className="sidelink" href="/about"><Icon n="info" size={19} />About Us</Link>
         <div className="sidefoot"><Icon n="mail" size={19} /><div><b>Invoiced by email</b><small>No payment at checkout</small></div></div>
       </aside>
       <div className="shelf">

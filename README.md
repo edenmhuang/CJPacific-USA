@@ -11,7 +11,7 @@ Vercel can't host the Medusa server itself (it needs a long-running process, Pos
 
 ## How ordering works
 
-1. A business **creates an account** (business email, business name, business phone; address optional, used for delivery). Checkout is blocked on the server for guests and for accounts without a name and phone.
+1. A business **creates an account** (business email, business name, business phone; address optional, used for delivery). They verify their email once using a link emailed to the account address. Checkout is blocked on the server for guests, incomplete business profiles, and unverified or mismatched emails.
 2. They add products, choose **Pickup** or **Local delivery**, an optional requested date and notes, and place the order. No card is collected (Medusa's manual payment provider).
 3. Emails go out right away:
    - **Customer:** "Order received" confirmation with the items, estimated total and a Track order link.
@@ -63,11 +63,12 @@ npm run dev                                # http://localhost:3000
 ### 3. Email (Resend)
 1. Create a Resend account, add and verify your domain (DNS records), create an API key.
 2. Set `RESEND_API_KEY`, `EMAIL_FROM=CJPacific USA <orders@yourdomain.com>`, `OWNER_ORDER_EMAIL`.
-3. Until a domain is verified, Resend's test sender only delivers to your own Resend account email, so customer emails won't arrive yet.
+3. Generate `EMAIL_VERIFICATION_SECRET` with `openssl rand -hex 32` and save it on the backend only. Keep it stable: changing it invalidates previous verifications and links. Set `STOREFRONT_URL` to the actual HTTPS storefront. A verified Resend sender is required before customers can verify and place orders.
+4. For local sandbox testing only, configure `EMAIL_PREVIEW_DIR` while running the backend in development and leave `RESEND_API_KEY` unset. Open the preview link in the browser where the test account is signed in. Never enable preview storage in production.
 
 ## Before launch
 - Replace the 10 sample products, prices and photos in Admin → Products (they are marked `sample: true`). Categories are in Admin → Products → Categories.
-- Use `metadata.unit` (lb / kg / item) and `metadata.pack` on products. The storefront shows "$12.80 /lb" and the pack size.
+- Set the product Subtitle to the pack size and the variant price to the entire pack price.
 - Set the cancellation cutoff, delivery area and minimums. The cancel rule lives in `backend/apps/backend/src/lib/order-stage.ts`.
 
 ## Where the custom code is

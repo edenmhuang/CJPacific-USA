@@ -1,11 +1,11 @@
 "use client"
+import { Footer } from "@/components/Footer"
 import { useCallback, useEffect, useMemo, useState } from "react"
 import { api } from "@/lib/api"
 import { money, packOf } from "@/lib/format"
 import type { Category, Product } from "@/lib/types"
 import { useStore } from "./store"
 import { Icon } from "@/components/Icon"
-import { Footer } from "@/components/Page"
 import { Photo } from "@/components/Photo"
 import { Qty } from "@/components/Qty"
 
@@ -78,7 +78,7 @@ export default function Catalog() {
             <div className="surface empty"><h2>No matching products</h2>
               <button className="secondary" onClick={() => { setQuery(""); setCat("all") }}>Clear filters</button></div>
           ) : <div className="cj-grid" key={cat}>{shown.map((p) => <ProductCard key={p.id} p={p} />)}</div>}
-        <Footer />
+        <Footer inShelf />
       </div>
     </main>
   )

@@ -4,7 +4,7 @@ import Link from "next/link"
 import { Suspense, useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { useStore } from "../store"
-import { Page, Title } from "@/components/Page"
+import { Req, Page, Title } from "@/components/Page"
 
 type Form = { company_name: string; email: string; phone: string; contact: string; password: string; address_1: string; city: string; province: string; postal_code: string }
 const blank: Form = { company_name: "", email: "", phone: "", contact: "", password: "", address_1: "", city: "", province: "", postal_code: "" }
@@ -17,7 +17,8 @@ export default function AccountPage() {
 function Account() {
   const { customer, ready, signIn, signOut, refreshCustomer } = useStore()
   const router = useRouter()
-  const next = useSearchParams().get("next") || ""
+  const requestedNext = useSearchParams().get("next")
+  const next = requestedNext === "/verify-email" || requestedNext === "/cart" || /^\/orders(?:\/[A-Za-z0-9_-]+)?$/.test(requestedNext ?? "") ? requestedNext : ""
   const [tab, setTab] = useState<"signin" | "create">("signin")
   const [form, setForm] = useState<Form>(blank)
   const [busy, setBusy] = useState(false)
@@ -44,14 +45,14 @@ function Account() {
   }
 
   const create = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
-    if (digits(form.phone).length < 10) throw new Error("Enter a business phone number with area code.")
+    if (form.phone.trim() && digits(form.phone).length < 10) throw new Error("Enter a business phone number with area code.")
     const email = form.email.trim().toLowerCase()
     const { token: registration } = await api<{ token: string }>("/auth/customer/emailpass/register", { method: "POST", body: { email, password: form.password }, auth: null })
-    await api("/store/customers", { method: "POST", auth: registration, body: { email, company_name: form.company_name.trim(), phone: form.phone.trim(), ...names() } })
+    await api("/store/customers", { method: "POST", auth: registration, body: { email, company_name: form.company_name.trim() || undefined, phone: form.phone.trim() || undefined, ...names() } })
     await signIn(email, form.password)
     await saveAddress()
     await refreshCustomer()
-    router.push(next || "/")
+    router.push("/verify-email")
   }) }
 
   const login = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
@@ -60,7 +61,7 @@ function Account() {
   }) }
 
   const save = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
-    if (digits(form.phone).length < 10) throw new Error("Enter a business phone number with area code.")
+    if (form.phone.trim() && digits(form.phone).length < 10) throw new Error("Enter a business phone number with area code.")
     await api("/store/customers/me", { method: "POST", body: { company_name: form.company_name.trim(), phone: form.phone.trim(), ...names() } })
     await saveAddress()
     await refreshCustomer()
@@ -69,17 +70,17 @@ function Account() {
 
   const forgot = () => run(async () => {
     const email = form.email.trim().toLowerCase()
-    if (!email) throw new Error("Enter your business email first.")
+    if (!email) throw new Error("Enter your email first.")
     await api("/auth/customer/emailpass/reset-password", { method: "POST", body: { identifier: email }, auth: null })
     setMsg({ ok: "If that email has an account, a reset link is on its way." })
   })
 
   const business = (
     <>
-      <label>Business name<input type="text" required value={form.company_name} onChange={set("company_name")} autoComplete="organization" /></label>
+      <label>Business name<input type="text" value={form.company_name} onChange={set("company_name")} autoComplete="organization" /></label>
       <div className="twocol">
-        <label>Contact name<input type="text" required value={form.contact} onChange={set("contact")} autoComplete="name" /></label>
-        <label>Business phone<input type="tel" required value={form.phone} onChange={set("phone")} autoComplete="tel" /></label>
+        <label>Contact name<input type="text" value={form.contact} onChange={set("contact")} autoComplete="name" /></label>
+        <label>Business phone<input type="tel" value={form.phone} onChange={set("phone")} autoComplete="tel" /></label>
       </div>
       <label>Delivery address<small> (optional)</small><input type="text" value={form.address_1} onChange={set("address_1")} autoComplete="address-line1" placeholder="Street" /></label>
       <div className="row3">
@@ -105,10 +106,11 @@ function Account() {
           <div className="actions"><button className="primary" type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</button></div>
         </form>
         <section className="surface">
-          <h2>{customer.company_name}</h2>
+          <h2>{customer.company_name || customer.email}</h2>
           <p className="dim">{customer.email}</p>
           <div className="actions">
             <Link className="secondary" href="/orders">View orders</Link>
+            <Link className="secondary" href="/verify-email">Email verification</Link>
             <button type="button" className="secondary" onClick={() => { signOut(); router.push("/") }}>Sign out</button>
           </div>
         </section>
@@ -127,8 +129,8 @@ function Account() {
           <h2>{tab === "signin" ? "Welcome back" : "Create a business account"}</h2>
           <p className="dim">{tab === "signin" ? "Sign in to order and track deliveries." : "Order for your business."}</p>
           {tab === "create" && business}
-          <label>Business email<input type="email" required value={form.email} onChange={set("email")} autoComplete="email" /></label>
-          <label>Password<input type="password" required minLength={tab === "create" ? 8 : undefined} value={form.password} onChange={set("password")} autoComplete={tab === "signin" ? "current-password" : "new-password"} /></label>
+          <label>Email<Req /><input type="email" required value={form.email} onChange={set("email")} autoComplete="email" /></label>
+          <label>Password<Req /><input type="password" required minLength={tab === "create" ? 8 : undefined} value={form.password} onChange={set("password")} autoComplete={tab === "signin" ? "current-password" : "new-password"} /></label>
           {msg.err && <p className="autherr" role="alert">{msg.err}</p>}
           {msg.ok && <p className="okmsg" role="status">{msg.ok}</p>}
           <button className="primary wide" type="submit" disabled={busy}>{busy ? (tab === "signin" ? "Signing in…" : "Creating…") : tab === "signin" ? "Sign in" : "Create account"}</button>

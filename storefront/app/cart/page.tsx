@@ -1,20 +1,47 @@
 "use client"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { api } from "@/lib/api"
 import { money, packOf } from "@/lib/format"
 import type { Address } from "@/lib/types"
 import { useStore } from "../store"
 import { Icon } from "@/components/Icon"
-import { Page, Title } from "@/components/Page"
+import { Req, Page, Title } from "@/components/Page"
 import { Photo } from "@/components/Photo"
 import { Qty } from "@/components/Qty"
 
 const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) }
 
+/** Slides a cart row out, fades it and collapses its height so the rows below glide up. */
+function vanish(row: HTMLElement | null | undefined, delay = 0) {
+  return new Promise<void>((done) => {
+    if (!row || !row.animate || matchMedia("(prefers-reduced-motion: reduce)").matches) return done()
+    const h = row.offsetHeight
+    row.style.pointerEvents = "none"; row.style.overflow = "hidden"
+    const a = row.animate([
+      { opacity: 1, transform: "none", height: `${h}px`, easing: "ease-out" },
+      { opacity: 0, transform: "translateX(16px)", height: `${h}px`, offset: 0.42, easing: "cubic-bezier(.4,0,.2,1)" },
+      { opacity: 0, transform: "translateX(16px)", height: "0px", paddingTop: "0px", paddingBottom: "0px", borderBottomWidth: "0px" },
+    ], { duration: 460, delay, easing: "linear", fill: "forwards" })
+    a.onfinish = a.oncancel = () => done()
+  })
+}
+
 export default function CartPage() {
-  const { cart, customer, ready, busy, forgetCart, quantityOf, whenIdle } = useStore()
+  const { cart, customer, ready, busy, forgetCart, quantityOf, setQuantity, whenIdle } = useStore()
+  const listRef = useRef<HTMLElement>(null)
+  const leaving = useRef(new Set<string>())
+  const removeLine = (variantId: string) => {
+    if (leaving.current.has(variantId)) return
+    leaving.current.add(variantId)
+    const row = listRef.current?.querySelector<HTMLElement>(`.cartline[data-id="${CSS.escape(variantId)}"]`)
+    vanish(row).then(() => { leaving.current.delete(variantId); setQuantity(variantId, 0) })
+  }
+  const clearCart = () => {
+    const rows = [...(listRef.current?.querySelectorAll<HTMLElement>(".cartline") ?? [])]
+    Promise.all(rows.map((row, i) => vanish(row, i * 45))).then(() => { forgetCart(); setConfirmClear(false) })
+  }
   const router = useRouter()
   const saved = customer?.addresses?.[0]
   const [mode, setMode] = useState<"pickup" | "delivery">("pickup")
@@ -22,7 +49,25 @@ export default function CartPage() {
   const [date, setDate] = useState("")
   const [notes, setNotes] = useState("")
   const [placing, setPlacing] = useState(false)
+  const [confirmClear, setConfirmClear] = useState(false)
   const [error, setError] = useState("")
+  const [verification, setVerification] = useState<{ id: string; verified: boolean } | null>(null)
+  const [verifyError, setVerifyError] = useState(false)
+  const [retry, setRetry] = useState(0)
+  useEffect(() => {
+    if (!customer) return
+    let live = true
+    const load = () => {
+      setVerifyError(false)
+      api<{ verified: boolean }>("/store/cj/email-verification")
+        .then(d => { if (live) setVerification({ id: customer.id, verified: d.verified }) })
+        .catch(() => { if (live) { setVerification(null); setVerifyError(true) } })
+    }
+    load()
+    window.addEventListener("focus", load)
+    return () => { live = false; window.removeEventListener("focus", load) }
+  }, [customer?.id, customer?.email, retry])
+  const emailVerified = !!customer && verification?.id === customer.id && verification.verified
 
   useEffect(() => { if (saved) setAddr({ address_1: saved.address_1, address_2: saved.address_2, city: saved.city, province: saved.province, postal_code: saved.postal_code }) }, [saved?.id])
 
@@ -34,7 +79,7 @@ export default function CartPage() {
 
   async function place(e: React.FormEvent) {
     e.preventDefault()
-    if (!cart || !customer || needsAddress || placing) return
+    if (!cart || !customer || !emailVerified || needsAddress || placing) return
     setPlacing(true); setError("")
     try {
       await whenIdle()
@@ -78,15 +123,20 @@ export default function CartPage() {
     <Page>
       <Title eyebrow="YOUR ORDER" name="Cart" sub={`${units} ${units === 1 ? "product" : "products"} in your order`} />
       <form className="orderlayout" onSubmit={place}>
-        <section className="surface">
-          <h2>Items in your order</h2>
+        <section className="surface" ref={listRef}>
+          <div className="carthead"><h2>Items in your order</h2><button type="button" className="textbtn danger" onClick={() => setConfirmClear(true)}>Clear all</button></div>
+          {confirmClear && (
+            <div className="callout clearconfirm"><b>Remove all items from your cart?</b>
+              <div className="actions"><button type="button" className="secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="primary" onClick={clearCart}>Clear cart</button></div>
+            </div>
+          )}
           {items.map((i) => {
             const pack = packOf(i.product_subtitle, i.variant_title)
             return (
-              <div className="cartline" key={i.id}>
+              <div className="cartline" key={i.id} data-id={i.variant_id}>
                 <Photo src={i.thumbnail} alt={i.product_title} />
-                <div><b>{i.product_title}</b>{pack && <small>{pack}</small>}<small>{money(i.unit_price)} each</small></div>
-                <Qty variantId={i.variant_id} title={i.product_title} />
+                <div><b>{i.product_title}</b>{pack && <small>{pack}</small>}<small>{money(i.unit_price)} each</small><button type="button" className="textbtn danger lineremove" aria-label={`Remove ${i.product_title} from cart`} onClick={() => removeLine(i.variant_id)}>Remove</button></div>
+                <Qty variantId={i.variant_id} title={i.product_title} onRemove={() => removeLine(i.variant_id)} />
                 <b>{money(Number(i.unit_price) * quantityOf(i.variant_id))}</b>
               </div>
             )
@@ -101,11 +151,11 @@ export default function CartPage() {
           </div>
           {mode === "pickup" ? <p className="dim">Pickup location and time are confirmed by staff.</p> : (
             <>
-              <label>Business delivery address<input required value={addr.address_1 ?? ""} onChange={(e) => setAddr({ ...addr, address_1: e.target.value })} autoComplete="address-line1" placeholder="Street" /></label>
+              <label>Business delivery address<Req /><input required value={addr.address_1 ?? ""} onChange={(e) => setAddr({ ...addr, address_1: e.target.value })} autoComplete="address-line1" placeholder="Street" /></label>
               <div className="row3">
-                <label>City<input required value={addr.city ?? ""} onChange={(e) => setAddr({ ...addr, city: e.target.value })} autoComplete="address-level2" /></label>
+                <label>City<Req /><input required value={addr.city ?? ""} onChange={(e) => setAddr({ ...addr, city: e.target.value })} autoComplete="address-level2" /></label>
                 <label>State<input value={addr.province ?? ""} onChange={(e) => setAddr({ ...addr, province: e.target.value })} autoComplete="address-level1" maxLength={2} placeholder="CA" /></label>
-                <label>ZIP<input required value={addr.postal_code ?? ""} onChange={(e) => setAddr({ ...addr, postal_code: e.target.value })} autoComplete="postal-code" inputMode="numeric" /></label>
+                <label>ZIP<Req /><input required value={addr.postal_code ?? ""} onChange={(e) => setAddr({ ...addr, postal_code: e.target.value })} autoComplete="postal-code" inputMode="numeric" /></label>
               </div>
             </>
           )}
@@ -117,6 +167,9 @@ export default function CartPage() {
           {error && <p className="notice" role="alert">{error}</p>}
           {!customer ? <Link className="primary wide" href="/account?next=/cart">Sign in to order</Link>
             : profileMissing ? <Link className="primary wide" href="/account">Add business name and phone</Link>
+            : verifyError ? <button className="secondary wide" type="button" onClick={() => setRetry(n => n + 1)}>Retry email verification check</button>
+            : verification?.id !== customer.id ? <p className="dim" role="status">Checking email verification…</p>
+            : !emailVerified ? <><p className="dim">Verify {customer.email} before placing your order.</p><Link className="primary wide" href="/verify-email">Verify email</Link></>
             : <>
                 <p className="dim">Ordering as <b>{customer.company_name}</b><br />{customer.email}</p>
                 <button className="primary wide" type="submit" disabled={placing || busy || needsAddress}>{placing ? "Placing order…" : <>Place order <Icon n="arrow" size={18} /></>}</button>

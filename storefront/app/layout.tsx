@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import "./globals.css"
 import { StoreProvider } from "./store"
 import { Header } from "@/components/Header"
+import { Footer } from "@/components/Footer"
 
 export const metadata: Metadata = {
   title: "CJPacific USA · Wholesale ordering",
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <div className="cj">
             <Header />
             {children}
+            <Footer />
           </div>
         </StoreProvider>
       </body>

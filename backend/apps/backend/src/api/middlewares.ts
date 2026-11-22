@@ -20,6 +20,10 @@ export default defineMiddlewares({
       middlewares: [authenticate('customer', ['session', 'bearer'])],
     },
     {
+      matcher: '/store/cj/email-verification',
+      middlewares: [authenticate('customer', ['session', 'bearer'])],
+    },
+    {
       method: ['POST'],
       matcher: '/admin/orders/:id/cj-stage',
       middlewares: [validateAndTransformBody(StageBody)],

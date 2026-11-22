@@ -103,3 +103,11 @@ export const ORDER_EMAIL_FIELDS = [
   "items.title", "items.product_title", "items.variant_title", "items.product_subtitle", "items.variant_sku", "items.quantity", "items.unit_price",
   "shipping_address.*", "shipping_methods.name", "customer.first_name", "customer.last_name", "customer.company_name", "customer.phone",
 ]
+
+export function verifyBusinessEmail(url: string) {
+  return {
+    subject: `Verify your email for ${store()}`,
+    html: `<div style="max-width:520px;margin:24px auto;padding:24px;font-family:Arial,sans-serif;color:#172925"><h1 style="font-size:22px">Verify your email</h1><p>Confirm this email before placing a pickup or delivery order.</p><p><a href="${esc(url)}" style="display:inline-block;background:#244b3f;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px">Verify email</a></p><p>This link expires in 24 hours. If you didn't create an account, you can ignore this email.</p></div>`,
+    text: `Verify your email before placing an order: ${url}\nThis link expires in 24 hours. If you didn't create an account, ignore this email.`,
+  }
+}

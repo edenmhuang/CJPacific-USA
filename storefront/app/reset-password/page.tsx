@@ -3,7 +3,7 @@ import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 import { api } from "@/lib/api"
 import { useStore } from "../store"
-import { Page } from "@/components/Page"
+import { Req, Page } from "@/components/Page"
 
 export default function ResetPage() {
   return <Suspense><Reset /></Suspense>
@@ -41,7 +41,7 @@ function Reset() {
           <form className="surface auth" onSubmit={submit}>
             <h2>New password</h2>
             <p className="dim">{email}</p>
-            <label>Password<input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></label>
+            <label>Password<Req /><input required type="password" minLength={8} value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="new-password" /></label>
             {err && <p className="autherr" role="alert">{err}</p>}
             <button className="primary wide" disabled={busy}>{busy ? "Saving…" : "Save and sign in"}</button>
           </form>

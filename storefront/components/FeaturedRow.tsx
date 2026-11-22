@@ -9,6 +9,11 @@ export function FeaturedRow({ title, children }: { title: string; children: Reac
   const measure = useCallback(() => {
     const el = track.current
     if (!el) return
+    // Cards take the same width as the catalog grid below (same minimum width and gap).
+    const cs = getComputedStyle(el)
+    const min = parseFloat(cs.getPropertyValue("--fmin")) || 210, gap = parseFloat(cs.columnGap) || 15
+    const w = el.clientWidth - 4, cols = Math.max(1, Math.floor((w + gap) / (min + gap)))
+    el.style.setProperty("--fw", `${(w - gap * (cols - 1)) / cols}px`)
     setEdge({ start: el.scrollLeft <= 2, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 2 })
   }, [])
   useEffect(() => {

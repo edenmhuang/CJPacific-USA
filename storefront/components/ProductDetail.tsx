@@ -8,6 +8,7 @@ import type { Product } from "@/lib/types"
 import { useStore } from "@/app/store"
 import { Icon } from "./Icon"
 import { Qty } from "./Qty"
+import { FavButton } from "./FavButton"
 
 /** Product panel: large photo plus details, opened from a catalog card. Escape, the × or the backdrop close it. */
 export function ProductDetail({ p, onClose }: { p: Product; onClose: () => void }) {
@@ -35,7 +36,7 @@ export function ProductDetail({ p, onClose }: { p: Product; onClose: () => void 
       <div className="pd-backdrop" onMouseDown={(e) => { if (e.target === e.currentTarget) onClose() }}>
         <div className="pd" role="dialog" aria-modal="true" aria-labelledby="pd-title">
           <button type="button" ref={closeRef} className="pd-close" aria-label="Close product details" onClick={onClose}><Icon n="close" size={18} /></button>
-          <div className="pd-media">{image ? <img src={image} alt={p.title} /> : <span aria-hidden="true"><Icon n={category ?? "all"} size={64} /></span>}</div>
+          <div className="pd-media"><FavButton id={p.id} title={p.title} />{image ? <img src={image} alt={p.title} /> : <span aria-hidden="true"><Icon n={category ?? "all"} size={64} /></span>}</div>
           <div className="pd-info">
             {category && <div className="eyebrow">{category.toUpperCase()}</div>}
             <h2 id="pd-title">{p.title}</h2>

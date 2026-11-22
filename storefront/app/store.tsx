@@ -5,6 +5,8 @@ import type { Cart, Customer } from "@/lib/types"
 
 const CART = "cj_cart"
 const CART_FIELDS = "id,customer_id,item_total,total,*items"
+/** A product the visitor tried to save before signing in; saved right after they sign in. */
+export const PENDING_FAVORITE = "cj_pending_favorite"
 
 type Store = {
   ready: boolean; regionId: string | null; customer: Customer | null; cart: Cart | null; busy: boolean
@@ -18,6 +20,8 @@ type Store = {
   forgetCart: () => void
   quantityOf: (variantId: string) => number
   whenIdle: () => Promise<unknown>
+  favorites: string[]
+  toggleFavorite: (productId: string) => Promise<void>
 }
 const Ctx = createContext<Store | null>(null)
 export const useStore = () => useContext(Ctx)!
@@ -29,6 +33,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCartState] = useState<Cart | null>(null)
   const [busy, setBusy] = useState(false)
   const [query, setQuery] = useState("")
+  const [favorites, setFavoritesState] = useState<string[]>([])
+  const favRef = useRef<string[]>([])
+  const setFavorites = useCallback((f: string[]) => { favRef.current = f; setFavoritesState(f) }, [])
   // Quantities the customer just tapped, shown at once while the cart request runs.
   const [pending, setPending] = useState<Record<string, number>>({})
   const cartRef = useRef<Cart | null>(null)
@@ -47,8 +54,13 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
       const { customer } = await api<{ customer: Customer }>("/store/customers/me?fields=*addresses")
       setCustomer(customer)
     } catch {
-      token.set(null); setCustomer(null)
+      token.set(null); setCustomer(null); setFavorites([])
+      return
     }
+    try {
+      const { favorites } = await api<{ favorites: string[] }>("/store/cj/favorites")
+      setFavorites(favorites)
+    } catch { /* favorites stay as they were */ }
   }, [])
 
   const loadCart = useCallback(async () => {
@@ -98,6 +110,14 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     token.set(t)
     await loadCustomer()
     await claimCart()
+    const pendingFavorite = sessionStorage.getItem(PENDING_FAVORITE)
+    sessionStorage.removeItem(PENDING_FAVORITE)
+    if (pendingFavorite) {
+      try {
+        const { favorites } = await api<{ favorites: string[] }>("/store/cj/favorites", { method: "POST", body: { product_id: pendingFavorite, favorite: true } })
+        setFavorites(favorites)
+      } catch { /* product no longer sold */ }
+    }
   }, [loadCustomer, claimCart])
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -106,7 +126,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [setSession])
 
   const signOut = useCallback(() => {
-    token.set(null); localStorage.removeItem(CART); setCustomer(null); setCart(null); setPending({})
+    token.set(null); localStorage.removeItem(CART); setCustomer(null); setCart(null); setPending({}); setFavorites([])
   }, [setCart])
 
   const setQuantity = useCallback((variantId: string, quantity: number) => {
@@ -149,6 +169,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return added
   }), [enqueue, ensureCart, setCart])
 
+  /** Saves or unsaves a product right away, then keeps the server's list (reverts if the request fails). */
+  const toggleFavorite = useCallback(async (productId: string) => {
+    const before = favRef.current
+    const saving = !before.includes(productId)
+    setFavorites(saving ? [productId, ...before] : before.filter((x) => x !== productId))
+    try {
+      const { favorites } = await api<{ favorites: string[] }>("/store/cj/favorites", { method: "POST", body: { product_id: productId, favorite: saving } })
+      setFavorites(favorites)
+    } catch {
+      setFavorites(before)
+    }
+  }, [setFavorites])
+
   const quantityOf = useCallback((v: string) => pending[v] ?? cart?.items.find((i) => i.variant_id === v)?.quantity ?? 0, [pending, cart])
   const count = useMemo(() => {
     const ids = new Set([...(cart?.items.map((i) => i.variant_id) ?? []), ...Object.keys(pending)])
@@ -162,7 +195,8 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     refreshCustomer: loadCustomer,
     whenIdle: () => queue.current,
     forgetCart: () => { localStorage.removeItem(CART); setCart(null); setPending({}) },
-  }), [ready, regionId, customer, cart, busy, query, count, signIn, setSession, signOut, setQuantity, addMany, quantityOf, loadCustomer, setCart])
+    favorites, toggleFavorite,
+  }), [ready, regionId, customer, cart, busy, query, count, signIn, setSession, signOut, setQuantity, addMany, quantityOf, loadCustomer, setCart, favorites, toggleFavorite])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

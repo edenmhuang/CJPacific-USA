@@ -27,6 +27,11 @@ export default defineMiddlewares({
       middlewares: [authenticate('customer', ['session', 'bearer'])],
     },
     {
+      // Favorites belong to a signed-in business account.
+      matcher: '/store/cj/favorites',
+      middlewares: [authenticate('customer', ['session', 'bearer'])],
+    },
+    {
       matcher: '/store/cj/email-verification',
       middlewares: [authenticate('customer', ['session', 'bearer'])],
     },

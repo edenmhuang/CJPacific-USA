@@ -17,7 +17,9 @@ export default function AccountPage() {
 function Account() {
   const { customer, ready, signIn, signOut, refreshCustomer } = useStore()
   const router = useRouter()
-  const requestedNext = useSearchParams().get("next")
+  const params = useSearchParams()
+  const requestedNext = params.get("next")
+  const forFavorites = params.get("reason") === "favorites"
   const next = requestedNext === "/verify-email" || requestedNext === "/cart" || /^\/orders(?:\/[A-Za-z0-9_-]+)?$/.test(requestedNext ?? "") ? requestedNext : ""
   const [tab, setTab] = useState<"signin" | "create">("signin")
   const [form, setForm] = useState<Form>(blank)
@@ -127,7 +129,7 @@ function Account() {
             <button type="button" className={tab === "create" ? "on" : ""} aria-pressed={tab === "create"} onClick={() => { setTab("create"); setMsg({}) }}>Create account</button>
           </div>
           <h2>{tab === "signin" ? "Welcome back" : "Create a business account"}</h2>
-          <p className="dim">{tab === "signin" ? "Sign in to order and track deliveries." : "Order for your business."}</p>
+          <p className="dim">{forFavorites ? "Sign in to save your favorites." : tab === "signin" ? "Sign in to order and track deliveries." : "Order for your business."}</p>
           {tab === "create" && business}
           <label>Email<Req /><input type="email" required value={form.email} onChange={set("email")} autoComplete="email" /></label>
           <label>Password<Req /><input type="password" required minLength={tab === "create" ? 8 : undefined} value={form.password} onChange={set("password")} autoComplete={tab === "signin" ? "current-password" : "new-password"} /></label>

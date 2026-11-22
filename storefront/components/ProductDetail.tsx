@@ -2,7 +2,8 @@
 import Link from "next/link"
 import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
-import { money, packOf } from "@/lib/format"
+import { money, outOfStock, packOf } from "@/lib/format"
+import { StockLabel } from "./StockLabel"
 import type { Product } from "@/lib/types"
 import { useStore } from "@/app/store"
 import { Icon } from "./Icon"
@@ -18,6 +19,7 @@ export function ProductDetail({ p, onClose }: { p: Product; onClose: () => void 
   const category = p.categories?.[0]?.name
   const q = v ? quantityOf(v.id) : 0
   const image = p.thumbnail
+  const out = outOfStock(p)
 
   useEffect(() => {
     const prev = document.body.style.overflow
@@ -41,7 +43,7 @@ export function ProductDetail({ p, onClose }: { p: Product; onClose: () => void 
             <div className="pd-price"><b>{price != null ? money(price) : "Ask for price"}</b>{price != null && <span>per pack</span>}</div>
             {p.description && <p className="pd-desc">{p.description}</p>}
             {price != null && v && (
-              <div className="pd-buy"><Qty variantId={v.id} title={p.title} /><span className="dim">{q ? `${q} in cart · ${money(price * q)}` : "Add to your order"}</span></div>
+              <div className="pd-buy">{out ? <StockLabel out /> : <><Qty variantId={v.id} title={p.title} /><span className="dim">{q ? `${q} in cart · ${money(price * q)}` : "Add to your order"}</span></>}</div>
             )}
             <dl className="pd-facts">
               {v?.sku && <div><dt>SKU</dt><dd>{v.sku}</dd></div>}

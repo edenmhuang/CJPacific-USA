@@ -6,7 +6,10 @@ export type Customer = {
   id: string; email: string; company_name: string | null; phone: string | null
   first_name: string | null; last_name: string | null; addresses?: Address[]
 }
-export type Variant = { id: string; title: string; sku: string | null; calculated_price?: { calculated_amount: number } }
+export type Variant = {
+  id: string; title: string; sku: string | null; calculated_price?: { calculated_amount: number }
+  manage_inventory?: boolean | null; allow_backorder?: boolean | null; inventory_quantity?: number | null
+}
 export type Product = {
   id: string; title: string; subtitle?: string | null; handle: string; thumbnail: string | null; description?: string | null
   metadata?: Record<string, unknown> | null; categories?: { id: string; name: string }[]; variants: Variant[]

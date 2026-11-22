@@ -12,3 +12,10 @@ export const COPYRIGHT = "© 2023 - 2026 CJ Pacific USA - Frozen Seafood Distrib
 
 /** Company introduction shown on About Us and Contact. */
 export const ABOUT = "富泉贸易公司成立于1983年，主要提供各类型高质量的食品，包括干货、冷冻海鲜、肉类和餐馆用品。三十多年来，我们重视客户满意度，通过提供优质的产品和出色的客户服务来维护长期的客户关系。我们与供应商紧密合作，确保所有产品符合美国的食品安全标准和客户的要求。"
+
+/** Out of stock when staff switched it off in Admin, or Medusa stock counts reached zero without backorders. */
+export function outOfStock(p: { metadata?: Record<string, unknown> | null; variants?: { manage_inventory?: boolean | null; allow_backorder?: boolean | null; inventory_quantity?: number | null }[] }) {
+  if (p.metadata?.cj_stock === "out") return true
+  const v = p.variants?.[0]
+  return !!v?.manage_inventory && !v.allow_backorder && typeof v.inventory_quantity === "number" && v.inventory_quantity <= 0
+}

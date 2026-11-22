@@ -3,7 +3,8 @@ import Link from "next/link"
 import { Footer } from "@/components/Footer"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { api } from "@/lib/api"
-import { money, packOf } from "@/lib/format"
+import { money, outOfStock, packOf } from "@/lib/format"
+import { StockLabel } from "@/components/StockLabel"
 import type { Category, Product } from "@/lib/types"
 import { useStore } from "./store"
 import { Icon } from "@/components/Icon"
@@ -11,7 +12,7 @@ import { Photo } from "@/components/Photo"
 import { Qty } from "@/components/Qty"
 import { ProductDetail } from "@/components/ProductDetail"
 
-const FIELDS = "id,title,subtitle,description,handle,thumbnail,*categories,variants.id,variants.title,variants.sku,*variants.calculated_price"
+const FIELDS = "id,title,subtitle,description,handle,thumbnail,metadata,*categories,variants.id,variants.title,variants.sku,variants.manage_inventory,variants.allow_backorder,+variants.inventory_quantity,*variants.calculated_price"
 const REFRESH_MS = 60_000
 
 export default function Catalog() {
@@ -117,16 +118,17 @@ function ProductCard({ p, onOpen }: { p: Product; onOpen: (id: string, el: HTMLE
   const price = v.calculated_price?.calculated_amount
   const pack = packOf(p.subtitle, v.title)
   const category = p.categories?.[0]?.name
+  const out = outOfStock(p)
   return (
     <article className="product">
       <button type="button" className="product-open" aria-label={`View details for ${p.title}`} onClick={(e) => onOpen(p.id, e.currentTarget)}><Photo src={p.thumbnail} alt={p.title} category={category} /></button>
       <div className="product-body">
-        <div className="product-top"><small>{category}</small></div>
+        <div className="product-top"><small>{category}</small><StockLabel out={out} /></div>
         <h3><button type="button" className="product-name" onClick={(e) => onOpen(p.id, e.currentTarget)}>{p.title}</button></h3>
         {pack && <p className="product-pack">{pack}</p>}
         <div className="product-bottom">
           <b>{price != null ? money(price) : "Ask"}</b>
-          {price != null && <Qty variantId={v.id} title={p.title} />}
+          {price != null && !out && <Qty variantId={v.id} title={p.title} />}
         </div>
       </div>
     </article>

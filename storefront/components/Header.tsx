@@ -8,7 +8,6 @@ const NAV = [
   { href: "/", label: "Catalog" },
   { href: "/orders", label: "Orders", icon: "order" },
   { href: "/account", label: "Account", icon: "user" },
-  { href: "/contact", label: "Contact" },
 ]
 
 export function Header() {

@@ -124,7 +124,7 @@ export default function CartPage() {
       <Title eyebrow="YOUR ORDER" name="Cart" sub={`${units} ${units === 1 ? "product" : "products"} in your order`} />
       <form className="orderlayout" onSubmit={place}>
         <section className="surface" ref={listRef}>
-          <div className="carthead"><h2>Items in your order</h2><button type="button" className="textbtn danger" onClick={() => setConfirmClear(true)}>Clear all</button></div>
+          <div className="carthead"><h2>Items in your order</h2><div className="cartactions"><Link className="textbtn" href="/">Continue shopping</Link><span className="cartsep" aria-hidden="true" /><button type="button" className="textbtn danger" onClick={() => setConfirmClear(true)}>Clear all</button></div></div>
           {confirmClear && (
             <div className="callout clearconfirm"><b>Remove all items from your cart?</b>
               <div className="actions"><button type="button" className="secondary" onClick={() => setConfirmClear(false)}>Keep items</button><button type="button" className="primary" onClick={clearCart}>Clear cart</button></div>
@@ -141,7 +141,6 @@ export default function CartPage() {
               </div>
             )
           })}
-          <Link className="textbtn" href="/">Continue shopping</Link>
         </section>
         <section className="surface">
           <h2>Pickup or delivery</h2>

@@ -3,7 +3,7 @@ import Link from "next/link"
 import { Footer } from "@/components/Footer"
 import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { api } from "@/lib/api"
-import { money, outOfStock, packOf } from "@/lib/format"
+import { featuredOrder, isFeatured, money, outOfStock, packOf } from "@/lib/format"
 import { StockLabel } from "@/components/StockLabel"
 import type { Category, Product } from "@/lib/types"
 import { useStore } from "./store"
@@ -12,6 +12,7 @@ import { Photo } from "@/components/Photo"
 import { Qty } from "@/components/Qty"
 import { ProductDetail } from "@/components/ProductDetail"
 import { FavButton } from "@/components/FavButton"
+import { FeaturedRow } from "@/components/FeaturedRow"
 
 const FIELDS = "id,title,subtitle,description,handle,thumbnail,metadata,*categories,variants.id,variants.title,variants.sku,variants.manage_inventory,variants.allow_backorder,+variants.inventory_quantity,*variants.calculated_price"
 const REFRESH_MS = 60_000
@@ -84,6 +85,9 @@ export default function Catalog() {
       .sort((a, b) => rank(a) - rank(b) || a.title.localeCompare(b.title))
   }, [products, cat, query, rank, favSet])
   const catName = cat === "all" ? "All products" : cat === "favorites" ? "Favorites" : categories.find((c) => c.id === cat)?.name ?? "All products"
+  // Featured top row: only when browsing a category or All products, not in search or Favorites.
+  const featured = useMemo(() => cat === "favorites" || query.trim() ? [] : shown.filter(isFeatured).sort((a, b) => featuredOrder(a) - featuredOrder(b) || a.title.localeCompare(b.title)), [shown, cat, query])
+  const rest = useMemo(() => featured.length ? shown.filter((p) => !isFeatured(p)) : shown, [shown, featured])
   const favCount = customer ? (products ?? []).filter((p) => favSet.has(p.id)).length : 0
 
   return (
@@ -113,7 +117,11 @@ export default function Catalog() {
           ) : !shown.length ? (
             <div className="surface empty"><h2>No matching products</h2>
               <button className="secondary" onClick={() => { setQuery(""); setCat("all") }}>Clear filters</button></div>
-          ) : <div className="cj-grid" key={cat}>{shown.map((p) => <ProductCard key={p.id} p={p} onOpen={openProduct} />)}</div>}
+          ) : <div className="catalogbody" key={cat}>
+            {featured.length > 0 && <FeaturedRow title="Featured">{featured.map((p) => <ProductCard key={p.id} p={p} onOpen={openProduct} />)}</FeaturedRow>}
+            {featured.length > 0 && rest.length > 0 && <h3 className="morehead">More products</h3>}
+            {rest.length > 0 && <div className="cj-grid">{rest.map((p) => <ProductCard key={p.id} p={p} onOpen={openProduct} />)}</div>}
+          </div>}
         <Footer inShelf />
       </div>
       {(() => { const p = products?.find((x) => x.id === detail); return p ? <ProductDetail p={p} onClose={closeProduct} /> : null })()}

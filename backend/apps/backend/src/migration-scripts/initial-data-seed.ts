@@ -13,6 +13,8 @@ import {
  * Photos uploaded in Admin replace them.
  */
 const CATEGORIES = ["Seafood", "Meat", "Vegetables", "Grains", "Seasoning/Sauces", "Dry Foods", "Supplies"];
+/** Sample featured products (cj_featured_rank) so the top row has something to show; staff change this in Admin. */
+const FEATURED: Record<string, number> = { salmon:  1,  shrimp:  2,  chicken:  3,  broccoli:  4,  sesame:  5,  rice:  6,  shiitake:  7 }
 const PRODUCTS: { handle: string; title: string; category: string; price: number; pack: string; sku: string; image: string }[] = [
   {
     "handle": "salmon",
@@ -174,7 +176,7 @@ export default async function initial_data_seed({ container }: { container: Medu
         title: p.title, handle: p.handle, status: ProductStatus.PUBLISHED,
         category_ids: [categories.find((c) => c.name === p.category)!.id],
         shipping_profile_id: profile.id, thumbnail: IMG(p.image), images: [{ url: IMG(p.image) }],
-        subtitle: p.pack, metadata: { sample: true },
+        subtitle: p.pack, metadata: { sample: true, ...(FEATURED[p.handle] ? { cj_featured: true, cj_featured_rank: FEATURED[p.handle] } : {}) },
         options: [{ id: packOption.id }],
         variants: [{
           title: p.pack, sku: p.sku, manage_inventory: false, options: { Pack: p.pack },

@@ -19,3 +19,10 @@ export function outOfStock(p: { metadata?: Record<string, unknown> | null; varia
   const v = p.variants?.[0]
   return !!v?.manage_inventory && !v.allow_backorder && typeof v.inventory_quantity === "number" && v.inventory_quantity <= 0
 }
+
+/** Featured products fill the scrolling top row (Admin › product › Featured). Lower position shows first. */
+export const isFeatured = (p: { metadata?: Record<string, unknown> | null }) => p.metadata?.cj_featured === true
+export const featuredOrder = (p: { metadata?: Record<string, unknown> | null }) => {
+  const n = Number(p.metadata?.cj_featured_rank)
+  return Number.isFinite(n) && n > 0 ? n : 1000
+}

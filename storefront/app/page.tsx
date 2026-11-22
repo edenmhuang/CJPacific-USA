@@ -1,7 +1,7 @@
 "use client"
 import Link from "next/link"
 import { Footer } from "@/components/Footer"
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { api } from "@/lib/api"
 import { money, packOf } from "@/lib/format"
 import type { Category, Product } from "@/lib/types"
@@ -9,8 +9,9 @@ import { useStore } from "./store"
 import { Icon } from "@/components/Icon"
 import { Photo } from "@/components/Photo"
 import { Qty } from "@/components/Qty"
+import { ProductDetail } from "@/components/ProductDetail"
 
-const FIELDS = "id,title,subtitle,handle,thumbnail,*categories,variants.id,variants.title,variants.sku,*variants.calculated_price"
+const FIELDS = "id,title,subtitle,description,handle,thumbnail,*categories,variants.id,variants.title,variants.sku,*variants.calculated_price"
 const REFRESH_MS = 60_000
 
 export default function Catalog() {
@@ -19,6 +20,29 @@ export default function Catalog() {
   const [categories, setCategories] = useState<Category[]>([])
   const [cat, setCat] = useState("all")
   const [error, setError] = useState("")
+  // Open product panel, kept in ?product= so Back closes it and links can share it.
+  const [detail, setDetail] = useState("")
+  const opener = useRef<HTMLElement | null>(null)
+  useEffect(() => {
+    const sync = () => {
+      const id = new URLSearchParams(location.search).get("product") ?? ""
+      setDetail(id)
+      if (!id) opener.current?.focus({ preventScroll: true })
+    }
+    sync()
+    window.addEventListener("popstate", sync)
+    return () => window.removeEventListener("popstate", sync)
+  }, [])
+  const openProduct = useCallback((id: string, el: HTMLElement) => {
+    opener.current = el
+    const u = new URL(location.href); u.searchParams.set("product", id)
+    history.pushState(history.state, "", u)
+    setDetail(id)
+  }, [])
+  const closeProduct = useCallback(() => {
+    if (new URLSearchParams(location.search).get("product")) history.back()
+    else setDetail("")
+  }, [])
 
   // Products, prices, photos and categories come straight from Medusa, so Admin edits show up here.
   const load = useCallback(async () => {
@@ -67,6 +91,7 @@ export default function Catalog() {
           <button key={c.id} className={cat === c.id ? "chosen" : ""} aria-pressed={cat === c.id} onClick={() => setCat(c.id)}><Icon n={c.name} size={19} />{c.name}</button>
         ))}
         <Link className="sidelink" href="/about"><Icon n="info" size={19} />About Us</Link>
+        <Link className="sidelink" href="/contact"><Icon n="phone" size={19} />Contact Us</Link>
         <div className="sidefoot"><Icon n="mail" size={19} /><div><b>Invoiced by email</b><small>No payment at checkout</small></div></div>
       </aside>
       <div className="shelf">
@@ -79,24 +104,25 @@ export default function Catalog() {
           : !shown.length ? (
             <div className="surface empty"><h2>No matching products</h2>
               <button className="secondary" onClick={() => { setQuery(""); setCat("all") }}>Clear filters</button></div>
-          ) : <div className="cj-grid" key={cat}>{shown.map((p) => <ProductCard key={p.id} p={p} />)}</div>}
+          ) : <div className="cj-grid" key={cat}>{shown.map((p) => <ProductCard key={p.id} p={p} onOpen={openProduct} />)}</div>}
         <Footer inShelf />
       </div>
+      {(() => { const p = products?.find((x) => x.id === detail); return p ? <ProductDetail p={p} onClose={closeProduct} /> : null })()}
     </main>
   )
 }
 
-function ProductCard({ p }: { p: Product }) {
+function ProductCard({ p, onOpen }: { p: Product; onOpen: (id: string, el: HTMLElement) => void }) {
   const v = p.variants[0]
   const price = v.calculated_price?.calculated_amount
   const pack = packOf(p.subtitle, v.title)
   const category = p.categories?.[0]?.name
   return (
     <article className="product">
-      <Photo src={p.thumbnail} alt={p.title} category={category} />
+      <button type="button" className="product-open" aria-label={`View details for ${p.title}`} onClick={(e) => onOpen(p.id, e.currentTarget)}><Photo src={p.thumbnail} alt={p.title} category={category} /></button>
       <div className="product-body">
         <div className="product-top"><small>{category}</small><span>{v.sku}</span></div>
-        <h3>{p.title}</h3>
+        <h3><button type="button" className="product-name" onClick={(e) => onOpen(p.id, e.currentTarget)}>{p.title}</button></h3>
         {pack && <p className="product-pack">{pack}</p>}
         <div className="product-bottom">
           <b>{price != null ? money(price) : "Ask"}</b>

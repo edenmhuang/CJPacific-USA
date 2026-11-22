@@ -1,6 +1,6 @@
 "use client"
 import { useState } from "react"
-import { ABOUT, CONTACT_EMAIL, CONTACT_PHONE, STORE_ADDRESS } from "@/lib/format"
+import { CONTACT_EMAIL, CONTACT_PHONE, STORE_ADDRESS } from "@/lib/format"
 import { Icon } from "@/components/Icon"
 import { Req, Page, Title } from "@/components/Page"
 
@@ -20,7 +20,6 @@ export default function Contact() {
       {sent && <div className="cj-feedback" role="status">Your email app opened with the message ready to send.<button type="button" onClick={() => setSent(false)} aria-label="Dismiss message">×</button></div>}
       <div className="contactgrid">
         <div className="contactstack">
-          <section className="surface about"><h2>About Us</h2><p lang="zh-Hans">{ABOUT}</p></section>
           <form className="surface contactform" onSubmit={send}>
             <h2>Send a message</h2>
             <label>Name<Req /><input type="text" required autoComplete="name" value={msg.name} onChange={(e) => setMsg({ ...msg, name: e.target.value })} /></label>

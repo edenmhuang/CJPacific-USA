@@ -10,7 +10,7 @@ export function Header() {
   const count = cart?.items.reduce((n, i) => n + i.quantity, 0) ?? 0
   const nav = [
     { href: "/", label: "Catalog", icon: "all" },
-    ...(customer ? [{ href: "/orders", label: "Orders", icon: "order" }] : []),
+    { href: "/orders", label: "Orders", icon: "order" },
     { href: "/account", label: customer ? customer.company_name || "Account" : "Sign in", icon: "user" },
   ]
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h))

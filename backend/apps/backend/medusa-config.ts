@@ -11,6 +11,9 @@ function secret(name: string) {
   return value
 }
 
+/** Public base for product photos uploaded in Admin. Files go to static/uploads (mount a Railway Volume there so they survive redeploys). */
+const backendUrl = (process.env.MEDUSA_BACKEND_URL || 'http://localhost:9000').replace(/\/$/, '')
+
 module.exports = defineConfig({
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -27,6 +30,19 @@ module.exports = defineConfig({
     backendUrl: process.env.MEDUSA_BACKEND_URL || '/',
   },
   modules: [
+    {
+      // Product photos uploaded in Medusa Admin. Without this, Medusa saves them with a localhost address.
+      resolve: '@medusajs/medusa/file',
+      options: {
+        providers: [
+          {
+            resolve: '@medusajs/medusa/file-local',
+            id: 'local',
+            options: { upload_dir: 'static/uploads', backend_url: `${backendUrl}/static/uploads` },
+          },
+        ],
+      },
+    },
     {
       // Order emails: customer confirmation + owner copy for invoice entry.
       // Sends through Resend when RESEND_API_KEY is set; otherwise logs and saves previews.

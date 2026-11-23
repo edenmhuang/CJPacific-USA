@@ -24,3 +24,5 @@ build
 !.yarn/versions
 
 .medusa
+# Product photos uploaded in Admin (on Railway these live on a Volume)
+static/uploads/

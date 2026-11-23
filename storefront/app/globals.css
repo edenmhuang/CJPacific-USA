@@ -59,3 +59,6 @@ html{scrollbar-gutter:stable}
 .cartlocked .cartline{opacity:.6;transition:opacity .2s ease}
 .primary.placed,.primary.placed:disabled{background:var(--accent);opacity:1}
 .primary.placed svg{animation:cjPop .34s cubic-bezier(.22,1,.36,1)}
+/* Field-level error, e.g. a requested date outside the allowed range. */
+.fielderr{margin:-6px 0 10px;color:#9d392f;font-size:12px;font-weight:600}
+.surface input[aria-invalid=true]{border-color:#c4372b;box-shadow:0 0 0 3px rgba(196,55,43,.12)}

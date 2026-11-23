@@ -13,7 +13,12 @@ import { Req, Page, Title } from "@/components/Page"
 import { Photo } from "@/components/Photo"
 import { Qty } from "@/components/Qty"
 
-const tomorrow = () => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10) }
+/** A local calendar day as YYYY-MM-DD, `offset` days from today (local time, not UTC). */
+const localDay = (offset: number) => { const d = new Date(); d.setDate(d.getDate() + offset); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` }
+/** Requested dates run from tomorrow to 90 days out. */
+const DATE_MIN = () => localDay(1)
+const DATE_MAX = () => localDay(90)
+const shortDay = (iso: string) => new Date(iso + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
 
 /** Slides a cart row out, fades it and collapses its height so the rows below glide up. */
 function vanish(row: HTMLElement | null | undefined, delay = 0) {
@@ -49,6 +54,7 @@ export default function CartPage() {
   const [mode, setMode] = useState<"pickup" | "delivery">("pickup")
   const [addr, setAddr] = useState<Address>({})
   const [date, setDate] = useState("")
+  const dateError = !!date && (!/^\d{4}-\d{2}-\d{2}$/.test(date) || date < DATE_MIN() || date > DATE_MAX())
   const [notes, setNotes] = useState("")
   const [placing, setPlacing] = useState(false)
   const [placed, setPlaced] = useState(false)
@@ -82,7 +88,7 @@ export default function CartPage() {
 
   async function place(e: React.FormEvent) {
     e.preventDefault()
-    if (!cart || !customer || !emailVerified || needsAddress || placing) return
+    if (!cart || !customer || !emailVerified || needsAddress || dateError || placing) return
     setPlacing(true); setError("")
     try {
       await whenIdle()
@@ -173,7 +179,8 @@ export default function CartPage() {
               </div>
             </>
           )}
-          <label>Requested date <small>(optional)</small><input type="date" min={tomorrow()} value={date} onChange={(e) => setDate(e.target.value)} /></label>
+          <label>Requested date <small>(optional)</small><input type="date" min={DATE_MIN()} max={DATE_MAX()} value={date} onChange={(e) => setDate(e.target.value)} aria-invalid={dateError || undefined} aria-describedby={dateError ? "date-error" : undefined} /></label>
+          {dateError && <p id="date-error" className="fielderr" role="alert">Choose a date from {shortDay(DATE_MIN())} to {shortDay(DATE_MAX())}.</p>}
           <label>Order notes <small>(optional)</small><textarea rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Delivery instructions or preferences" maxLength={500} /></label>
           <div className="line"><span>Merchandise subtotal</span><b>{money(subtotal)}</b></div>
           <div className="line total"><span>Estimated total</span><b>{money(subtotal)}</b></div>
@@ -186,7 +193,7 @@ export default function CartPage() {
             : !emailVerified ? <><p className="dim">Verify {customer.email} before placing your order.</p><Link className="primary wide" href="/verify-email">Verify email</Link></>
             : <>
                 <p className="dim">Ordering as <b>{customer.company_name}</b><br />{customer.email}</p>
-                <button className={`primary wide${placed ? " placed" : ""}`} type="submit" disabled={placing || busy || needsAddress}>{placed ? <><Icon n="check" size={18} />Order placed</> : placing ? "Placing order…" : saving ? "Saving cart…" : <>Place order <Icon n="arrow" size={18} /></>}</button>
+                <button className={`primary wide${placed ? " placed" : ""}`} type="submit" disabled={placing || busy || needsAddress || dateError}>{placed ? <><Icon n="check" size={18} />Order placed</> : placing ? "Placing order…" : saving ? "Saving cart…" : <>Place order <Icon n="arrow" size={18} /></>}</button>
               </>}
         </section>
       </form>

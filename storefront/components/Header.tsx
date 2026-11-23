@@ -11,7 +11,7 @@ const NAV = [
 ]
 
 export function Header() {
-  const { count, query, setQuery } = useStore()
+  const { count, query, setQuery, customer, ready } = useStore()
   const path = usePathname()
   const router = useRouter()
   const active = (h: string) => (h === "/" ? path === "/" : path.startsWith(h))
@@ -28,7 +28,10 @@ export function Header() {
         <nav className="cj-nav" aria-label="Main navigation">
           {NAV.map((n) => (
             <Link key={n.href} href={n.href} className={active(n.href) ? "active" : ""} aria-current={active(n.href) ? "page" : undefined}>
-              {n.icon && <Icon n={n.icon} size={17} />}<span>{n.label}</span>
+              {n.icon && <Icon n={n.icon} size={17} />}
+              {n.href === "/account"
+                ? <span className="acctname">{!ready ? n.label : customer ? (customer.company_name || customer.first_name || n.label) : "Sign in"}</span>
+                : <span>{n.label}</span>}
             </Link>
           ))}
           <Link href="/cart" className={`cartnav${active("/cart") ? " active" : ""}`} aria-current={active("/cart") ? "page" : undefined} aria-label={`Cart, ${count} items`}>

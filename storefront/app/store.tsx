@@ -11,10 +11,10 @@ export const PENDING_FAVORITE = "cj_pending_favorite"
 type Store = {
   ready: boolean; regionId: string | null; customer: Customer | null; cart: Cart | null; busy: boolean
   query: string; setQuery: (q: string) => void; count: number
-  signIn: (email: string, password: string) => Promise<void>
-  setSession: (t: string) => Promise<void>
+  signIn: (email: string, password: string, profile?: Record<string, string | undefined>) => Promise<void>
+  setSession: (t: string) => Promise<boolean>
   signOut: () => void
-  refreshCustomer: () => Promise<void>
+  refreshCustomer: () => Promise<unknown>
   setQuantity: (variantId: string, quantity: number) => Promise<void>
   addMany: (lines: { variant_id: string; quantity: number }[]) => Promise<number>
   forgetCart: () => void
@@ -25,6 +25,11 @@ type Store = {
 }
 const Ctx = createContext<Store | null>(null)
 export const useStore = () => useContext(Ctx)!
+
+/** The customer id inside a Medusa session token, or "" when the login has no customer profile yet. */
+function actorOf(t: string): string {
+  try { return JSON.parse(atob(t.split(".")[1].replace(/-/g, "+").replace(/_/g, "/"))).actor_id || "" } catch { return "" }
+}
 
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false)
@@ -48,19 +53,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     return next
   }, [])
 
-  const loadCustomer = useCallback(async () => {
-    if (!token.get()) return setCustomer(null)
+  /** Loads the signed-in business. Returns false when there is no valid session. */
+  const loadCustomer = useCallback(async (): Promise<boolean> => {
+    if (!token.get()) { setCustomer(null); return false }
     try {
       const { customer } = await api<{ customer: Customer }>("/store/customers/me?fields=*addresses")
       setCustomer(customer)
     } catch {
       token.set(null); setCustomer(null); setFavorites([])
-      return
+      return false
     }
     try {
       const { favorites } = await api<{ favorites: string[] }>("/store/cj/favorites")
       setFavorites(favorites)
     } catch { /* favorites stay as they were */ }
+      return true
   }, [])
 
   const loadCart = useCallback(async () => {
@@ -108,7 +115,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const setSession = useCallback(async (t: string) => {
     token.set(t)
-    await loadCustomer()
+    if (!(await loadCustomer())) return false
     await claimCart()
     const pendingFavorite = sessionStorage.getItem(PENDING_FAVORITE)
     sessionStorage.removeItem(PENDING_FAVORITE)
@@ -118,11 +125,19 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         setFavorites(favorites)
       } catch { /* product no longer sold */ }
     }
+    return true
   }, [loadCustomer, claimCart])
 
-  const signIn = useCallback(async (email: string, password: string) => {
-    const { token: t } = await api<{ token: string }>("/auth/customer/emailpass", { method: "POST", body: { email, password }, auth: null })
-    await setSession(t)
+  /** Signs a business in. An email that already has a CJPacific login (such as a staff Admin account)
+   *  but no customer profile gets one created here, so the same email can also order. */
+  const signIn = useCallback(async (email: string, password: string, profile?: Record<string, string | undefined>) => {
+    const login = () => api<{ token: string }>("/auth/customer/emailpass", { method: "POST", body: { email, password }, auth: null })
+    let { token: t } = await login()
+    if (!actorOf(t)) {
+      await api("/store/customers", { method: "POST", auth: t, body: { email, ...(profile || {}) } })
+      ;({ token: t } = await login())
+    }
+    if (!(await setSession(t))) throw new Error("We couldn’t open your account. Please try again.")
   }, [setSession])
 
   const signOut = useCallback(() => {

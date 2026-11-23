@@ -49,9 +49,16 @@ function Account() {
   const create = (e: React.FormEvent) => { e.preventDefault(); run(async () => {
     if (form.phone.trim() && digits(form.phone).length < 10) throw new Error("Enter a business phone number with area code.")
     const email = form.email.trim().toLowerCase()
-    const { token: registration } = await api<{ token: string }>("/auth/customer/emailpass/register", { method: "POST", body: { email, password: form.password }, auth: null })
-    await api("/store/customers", { method: "POST", auth: registration, body: { email, company_name: form.company_name.trim() || undefined, phone: form.phone.trim() || undefined, ...names() } })
-    await signIn(email, form.password)
+    const profile = { company_name: form.company_name.trim() || undefined, phone: form.phone.trim() || undefined, ...names() }
+    try {
+      const { token: registration } = await api<{ token: string }>("/auth/customer/emailpass/register", { method: "POST", body: { email, password: form.password }, auth: null })
+      await api("/store/customers", { method: "POST", auth: registration, body: { email, ...profile } })
+      await signIn(email, form.password)
+    } catch (e) {
+      // This email already has a login (for example a staff Admin account): sign in with it and add the customer profile.
+      if (!/already exists/i.test((e as Error).message)) throw e
+      await signIn(email, form.password, profile)
+    }
     await saveAddress()
     await refreshCustomer()
     router.push("/verify-email")

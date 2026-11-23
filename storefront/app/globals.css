@@ -38,3 +38,5 @@ html{scrollbar-gutter:stable}
 .backlink{display:inline-flex;align-items:center;gap:4px;color:var(--accent);font-size:13px;font-weight:700;margin-bottom:14px}.backlink:hover{text-decoration:underline}
 .progress small{font-size:10px;color:var(--sub);font-weight:400}
 @media (prefers-reduced-motion:reduce){.product.skeleton{animation:none}}
+/* Signed-in business name in the top bar. */
+.cj-nav .acctname{max-width:150px;overflow:hidden;text-overflow:ellipsis}

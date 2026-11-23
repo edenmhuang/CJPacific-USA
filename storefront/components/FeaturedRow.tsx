@@ -1,5 +1,5 @@
 "use client"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useLayoutEffect, useRef, useState } from "react"
 import { Icon } from "./Icon"
 
 /** Horizontally scrolling row of featured products with previous / next buttons. */
@@ -16,7 +16,8 @@ export function FeaturedRow({ title, children }: { title: string; children: Reac
     el.style.setProperty("--fw", `${(w - gap * (cols - 1)) / cols}px`)
     setEdge({ start: el.scrollLeft <= 2, end: el.scrollLeft + el.clientWidth >= el.scrollWidth - 2 })
   }, [])
-  useEffect(() => {
+  // Layout effect: size the cards before the first paint so they never visibly snap.
+  useLayoutEffect(() => {
     const el = track.current
     if (!el) return
     measure()

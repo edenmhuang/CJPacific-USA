@@ -29,7 +29,7 @@ function vanish(row: HTMLElement | null | undefined, delay = 0) {
 }
 
 export default function CartPage() {
-  const { cart, customer, ready, busy, forgetCart, quantityOf, setQuantity, whenIdle } = useStore()
+  const { cart, customer, ready, busy, forgetCart, quantityOf, setQuantity, whenIdle, saving, adding } = useStore()
   const listRef = useRef<HTMLElement>(null)
   const leaving = useRef(new Set<string>())
   const removeLine = (variantId: string) => {
@@ -112,6 +112,12 @@ export default function CartPage() {
   }
 
   if (!ready) return <Page><Title eyebrow="YOUR ORDER" name="Cart" /></Page>
+  if (!items.length && adding) return (
+    <Page>
+      <Title eyebrow="YOUR ORDER" name="Cart" />
+      <div className="surface empty" role="status"><span className="syncdot big" aria-hidden="true" /><h2>Adding to your cart…</h2><p>Your items will appear in a moment.</p></div>
+    </Page>
+  )
   if (!items.length) return (
     <Page>
       <Title eyebrow="YOUR ORDER" name="Cart" />
@@ -141,6 +147,7 @@ export default function CartPage() {
               </div>
             )
           })}
+          {adding > 0 && <p className="cartsync" role="status"><span className="syncdot" aria-hidden="true" />Adding {adding} more {adding === 1 ? "item" : "items"}…</p>}
         </section>
         <section className="surface">
           <h2>Pickup or delivery</h2>
@@ -171,7 +178,7 @@ export default function CartPage() {
             : !emailVerified ? <><p className="dim">Verify {customer.email} before placing your order.</p><Link className="primary wide" href="/verify-email">Verify email</Link></>
             : <>
                 <p className="dim">Ordering as <b>{customer.company_name}</b><br />{customer.email}</p>
-                <button className="primary wide" type="submit" disabled={placing || busy || needsAddress}>{placing ? "Placing order…" : <>Place order <Icon n="arrow" size={18} /></>}</button>
+                <button className="primary wide" type="submit" disabled={placing || busy || needsAddress}>{placing ? "Placing order…" : saving ? "Saving cart…" : <>Place order <Icon n="arrow" size={18} /></>}</button>
               </>}
         </section>
       </form>

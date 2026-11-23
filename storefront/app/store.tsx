@@ -14,6 +14,9 @@ type Store = {
   signIn: (email: string, password: string, profile?: Record<string, string | undefined>) => Promise<void>
   setSession: (t: string) => Promise<boolean>
   signOut: () => void
+  /** Cart changes still being saved, and products still being added to the cart. */
+  saving: boolean
+  adding: number
   refreshCustomer: () => Promise<unknown>
   setQuantity: (variantId: string, quantity: number) => Promise<void>
   addMany: (lines: { variant_id: string; quantity: number }[]) => Promise<number>
@@ -141,13 +144,21 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
   }, [setSession])
 
   const signOut = useCallback(() => {
-    token.set(null); localStorage.removeItem(CART); setCustomer(null); setCart(null); setPending({}); setFavorites([])
+    token.set(null); localStorage.removeItem(CART); setCustomer(null); setCart(null); want.current = {}; setPending({}); setFavorites([])
   }, [setCart])
 
+  /** Latest quantity the customer wants per product, and products that already have a request waiting.
+   *  Taps made while a request is waiting merge into it, so rapid taps send one request with the final quantity. */
+  const want = useRef<Record<string, number>>({})
+  const waiting = useRef(new Set<string>())
   const setQuantity = useCallback((variantId: string, quantity: number) => {
-    const q = Math.max(0, Math.min(999, quantity))
-    setPending((p) => ({ ...p, [variantId]: q }))
+    want.current[variantId] = Math.max(0, Math.min(999, quantity))
+    setPending((p) => ({ ...p, [variantId]: want.current[variantId] }))
+    if (waiting.current.has(variantId)) return queue.current.then(() => undefined)
+    waiting.current.add(variantId)
     return enqueue(async () => {
+      waiting.current.delete(variantId)
+      const q = want.current[variantId]
       try {
         const id = await ensureCart()
         const line = cartRef.current?.items.find((i) => i.variant_id === variantId)
@@ -159,7 +170,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
         if (next) setCart(next)
       } catch { /* the real quantity shows again below */ }
       finally {
-        setPending((p) => { if (p[variantId] !== q) return p; const n = { ...p }; delete n[variantId]; return n })
+        // Keep showing the newer quantity if the customer tapped again while this request ran.
+        if (want.current[variantId] === q && !waiting.current.has(variantId)) {
+          delete want.current[variantId]
+          setPending((p) => { const n = { ...p }; delete n[variantId]; return n })
+        }
       }
     })
   }, [enqueue, ensureCart, setCart])
@@ -209,9 +224,11 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     ready, regionId, customer, cart, busy, query, setQuery, count, signIn, setSession, signOut, setQuantity, addMany, quantityOf,
     refreshCustomer: loadCustomer,
     whenIdle: () => queue.current,
-    forgetCart: () => { localStorage.removeItem(CART); setCart(null); setPending({}) },
+    forgetCart: () => { localStorage.removeItem(CART); setCart(null); want.current = {}; setPending({}) },
+    saving: Object.keys(pending).length > 0,
+    adding: Object.keys(pending).filter((v) => pending[v] > 0 && !cart?.items.some((i) => i.variant_id === v)).length,
     favorites, toggleFavorite,
-  }), [ready, regionId, customer, cart, busy, query, count, signIn, setSession, signOut, setQuantity, addMany, quantityOf, loadCustomer, setCart, favorites, toggleFavorite])
+  }), [ready, regionId, customer, cart, busy, query, count, signIn, setSession, signOut, setQuantity, addMany, quantityOf, loadCustomer, setCart, favorites, toggleFavorite, pending])
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>
 }

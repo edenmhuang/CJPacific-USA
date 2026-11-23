@@ -49,3 +49,8 @@ html{scrollbar-gutter:stable}
 .signedas h1{font-family:Georgia,serif;font-weight:500;letter-spacing:-.04em;font-size:clamp(30px,4cqw,44px);line-height:1.05;margin:4px 0 2px;overflow-wrap:anywhere}
 .signedas+.callout{margin:0 0 18px}
 .surface label>small.hint{display:block;margin-top:5px;color:var(--sub);font-weight:400}
+/* Cart changes still being saved. */
+.cartsync{display:flex;align-items:center;gap:9px;margin:12px 0 0;color:var(--sub);font-size:13px}
+.syncdot{width:8px;height:8px;border-radius:999px;background:var(--accent);animation:cjPulse 1s ease-in-out infinite}
+.syncdot.big{display:block;width:12px;height:12px;margin:0 auto 12px}
+@keyframes cjPulse{50%{opacity:.25}}

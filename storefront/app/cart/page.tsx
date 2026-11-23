@@ -3,6 +3,8 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 import { api } from "@/lib/api"
+import { rememberPlaced } from "@/lib/placed"
+import type { Order } from "@/lib/types"
 import { money, packOf } from "@/lib/format"
 import type { Address } from "@/lib/types"
 import { useStore } from "../store"
@@ -49,6 +51,7 @@ export default function CartPage() {
   const [date, setDate] = useState("")
   const [notes, setNotes] = useState("")
   const [placing, setPlacing] = useState(false)
+  const [placed, setPlaced] = useState(false)
   const [confirmClear, setConfirmClear] = useState(false)
   const [error, setError] = useState("")
   const [verification, setVerification] = useState<{ id: string; verified: boolean } | null>(null)
@@ -103,8 +106,13 @@ export default function CartPage() {
       await api(`/store/payment-collections/${payment_collection.id}/payment-sessions`, { method: "POST", body: { provider_id: "pp_system_default" } })
       const done = await api<{ type: string; order?: { id: string }; error?: { message: string } }>(`/store/carts/${cart.id}/complete`, { method: "POST" })
       if (done.type !== "order" || !done.order) throw new Error(done.error?.message || "The order couldn't be placed.")
-      forgetCart()
-      router.push(`/orders/${done.order.id}?placed=1`)
+      // Load the confirmation before leaving, show the placed state briefly, then switch pages.
+      // The cart is cleared on the confirmation page, so this page never flashes empty.
+      const id = done.order.id
+      await api<{ order: Order }>(`/store/cj/orders/${id}`).then((d) => rememberPlaced(d.order)).catch(() => undefined)
+      setPlaced(true)
+      await new Promise((r) => setTimeout(r, matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 550))
+      router.push(`/orders/${id}?placed=1`)
     } catch (err) {
       setError((err as Error).message)
       setPlacing(false)
@@ -129,7 +137,7 @@ export default function CartPage() {
     <Page>
       <Title eyebrow="YOUR ORDER" name="Cart" sub={`${units} ${units === 1 ? "product" : "products"} in your order`} />
       <form className="orderlayout" onSubmit={place}>
-        <section className="surface" ref={listRef}>
+        <section className={`surface${placing ? " cartlocked" : ""}`} ref={listRef} aria-busy={placing}>
           <div className="carthead"><h2>Items in your order</h2><div className="cartactions"><Link className="textbtn" href="/">Continue shopping</Link><span className="cartsep" aria-hidden="true" /><button type="button" className="textbtn danger" onClick={() => setConfirmClear(true)}>Clear all</button></div></div>
           {confirmClear && (
             <div className="callout clearconfirm"><b>Remove all items from your cart?</b>
@@ -178,7 +186,7 @@ export default function CartPage() {
             : !emailVerified ? <><p className="dim">Verify {customer.email} before placing your order.</p><Link className="primary wide" href="/verify-email">Verify email</Link></>
             : <>
                 <p className="dim">Ordering as <b>{customer.company_name}</b><br />{customer.email}</p>
-                <button className="primary wide" type="submit" disabled={placing || busy || needsAddress}>{placing ? "Placing order…" : saving ? "Saving cart…" : <>Place order <Icon n="arrow" size={18} /></>}</button>
+                <button className={`primary wide${placed ? " placed" : ""}`} type="submit" disabled={placing || busy || needsAddress}>{placed ? <><Icon n="check" size={18} />Order placed</> : placing ? "Placing order…" : saving ? "Saving cart…" : <>Place order <Icon n="arrow" size={18} /></>}</button>
               </>}
         </section>
       </form>

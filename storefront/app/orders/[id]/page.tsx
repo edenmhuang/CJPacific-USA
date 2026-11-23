@@ -3,6 +3,7 @@ import Link from "next/link"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useCallback, useEffect, useState } from "react"
 import { api } from "@/lib/api"
+import { takePlaced } from "@/lib/placed"
 import { CONTACT_EMAIL, day, dayTime, money, packOf } from "@/lib/format"
 import type { Order } from "@/lib/types"
 import { useStore } from "../../store"
@@ -17,8 +18,15 @@ function OrderDetail() {
   const { id } = useParams<{ id: string }>()
   const placed = useSearchParams().get("placed") === "1"
   const router = useRouter()
-  const { customer, ready, addMany } = useStore()
-  const [order, setOrder] = useState<Order | null>(null)
+  const { customer, ready, addMany, forgetCart, setQuery } = useStore()
+  const [order, setOrder] = useState<Order | null>(() => takePlaced(id))
+
+  // Just placed: empty the cart and reset the catalog search, then drop ?placed=1 so a refresh can't clear a new cart.
+  useEffect(() => {
+    if (!placed) return
+    forgetCart(); setQuery("")
+    router.replace(`/orders/${id}`, { scroll: false })
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
   const [err, setErr] = useState("")
   const [confirm, setConfirm] = useState(false)
   const [busy, setBusy] = useState(false)
@@ -50,7 +58,7 @@ function OrderDetail() {
     } catch (e) { setErr((e as Error).message) } finally { setBusy(false) }
   }
 
-  if (!ready) return <Page><div /></Page>
+  if (!ready && !order) return <Page><div /></Page>
   if (!customer) return <Page><div className="surface empty"><Icon n="user" size={28} /><h2>Sign in to see this order</h2><Link className="primary" href={`/account?next=/orders/${id}`}>Sign in</Link></div></Page>
   if (err && !order) return <Page><div className="surface empty"><h2>Order not found</h2><Link className="primary" href="/orders">All orders</Link></div></Page>
   if (!order) return <Page><div /></Page>

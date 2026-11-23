@@ -54,3 +54,8 @@ html{scrollbar-gutter:stable}
 .syncdot{width:8px;height:8px;border-radius:999px;background:var(--accent);animation:cjPulse 1s ease-in-out infinite}
 .syncdot.big{display:block;width:12px;height:12px;margin:0 auto 12px}
 @keyframes cjPulse{50%{opacity:.25}}
+/* Placing an order: the cart holds still, then the button confirms before the page changes. */
+.cartlocked{pointer-events:none}
+.cartlocked .cartline{opacity:.6;transition:opacity .2s ease}
+.primary.placed,.primary.placed:disabled{background:var(--accent);opacity:1}
+.primary.placed svg{animation:cjPop .34s cubic-bezier(.22,1,.36,1)}

@@ -1,5 +1,5 @@
 "use client"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import { money, outOfStock, packOf } from "@/lib/format"
@@ -13,6 +13,7 @@ import { FavButton } from "./FavButton"
 /** Product panel: large photo plus details, opened from a catalog card. Escape, the × or the backdrop close it. */
 export function ProductDetail({ p, onClose }: { p: Product; onClose: () => void }) {
   const { quantityOf } = useStore()
+  const router = useRouter()
   const closeRef = useRef<HTMLButtonElement>(null)
   const v = p.variants[0]
   const price = v?.calculated_price?.calculated_amount
@@ -53,7 +54,8 @@ export function ProductDetail({ p, onClose }: { p: Product; onClose: () => void 
               <div><dt>Fulfillment</dt><dd>Pickup or local delivery</dd></div>
               <div><dt>Payment</dt><dd>Invoice by email</dd></div>
             </dl>
-            {q > 0 && <Link className="primary wide" href="/cart" onClick={onClose}>View cart <Icon n="arrow" size={17} /></Link>}
+            {/* Replace the ?product= entry instead of closing first: closing goes back in history and would cancel this navigation. */}
+            {q > 0 && <button type="button" className="primary wide" onClick={() => router.replace("/cart")}>View cart <Icon n="arrow" size={17} /></button>}
           </div>
         </div>
       </div>

@@ -5,10 +5,16 @@ import { Suspense, useEffect, useState } from "react"
 import { api } from "@/lib/api"
 import { useStore } from "../store"
 import { Req, Page, Title } from "@/components/Page"
+import { Icon } from "@/components/Icon"
 
 type Form = { company_name: string; email: string; phone: string; contact: string; password: string; address_1: string; city: string; province: string; postal_code: string }
 const blank: Form = { company_name: "", email: "", phone: "", contact: "", password: "", address_1: "", city: "", province: "", postal_code: "" }
 const digits = (s: string) => s.replace(/\D/g, "")
+
+function initials(name: string) {
+  const words = name.replace(/@.*/, "").split(/[\s._-]+/).filter(Boolean)
+  return ((words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "?").slice(0, 2))).toUpperCase()
+}
 
 export default function AccountPage() {
   return <Suspense><Account /></Suspense>
@@ -74,6 +80,7 @@ function Account() {
     await api("/store/customers/me", { method: "POST", body: { company_name: form.company_name.trim(), phone: form.phone.trim(), ...names() } })
     await saveAddress()
     await refreshCustomer()
+    if (next === "/cart" && form.company_name.trim() && form.phone.trim()) return router.push("/cart")
     setMsg({ ok: "Saved." })
   }) }
 
@@ -104,19 +111,27 @@ function Account() {
 
   if (customer) return (
     <Page>
-      <Title eyebrow="YOUR BUSINESS" name="Account" />
+      <div className="signedas">
+        <span className="avatar lg" aria-hidden="true">{customer.company_name || customer.first_name ? initials(customer.company_name || customer.first_name || "") : <Icon n="user" size={24} />}</span>
+        <div>
+          <div className="eyebrow">SIGNED IN</div>
+          <h1>{customer.company_name || [customer.first_name, customer.last_name].filter(Boolean).join(" ") || "Your account"}</h1>
+          <p className="dim">{customer.email}</p>
+        </div>
+      </div>
+      {(!customer.company_name || !customer.phone) && <p className="callout">Add your business name and phone to place orders.</p>}
       <div className="orderlayout">
         <form className="surface" onSubmit={save}>
-          <h2>Business profile</h2>
+          <h2>Contact information</h2>
+          <p className="dim">Used on your orders and invoices.</p>
           {business}
-          <label>Email<input type="email" value={customer.email} readOnly disabled /></label>
+          <label>Email<input type="email" value={customer.email} readOnly disabled /><small className="hint">To change your sign-in email, contact us.</small></label>
           {msg.err && <p className="notice" role="alert">{msg.err}</p>}
           {msg.ok && <p className="okmsg" role="status">{msg.ok}</p>}
-          <div className="actions"><button className="primary" type="submit" disabled={busy}>{busy ? "Saving…" : "Save"}</button></div>
+          <div className="actions"><button className="primary" type="submit" disabled={busy}>{busy ? "Saving…" : next === "/cart" ? "Save and return to cart" : "Save changes"}</button></div>
         </form>
         <section className="surface">
-          <h2>{customer.company_name || customer.email}</h2>
-          <p className="dim">{customer.email}</p>
+          <h2>Your account</h2>
           <div className="actions">
             <Link className="secondary" href="/orders">View orders</Link>
             <Link className="secondary" href="/verify-email">Email verification</Link>

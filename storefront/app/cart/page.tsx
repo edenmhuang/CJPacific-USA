@@ -165,7 +165,7 @@ export default function CartPage() {
           <p className="invoice"><Icon n="mail" size={18} /> Invoice by email. No payment collected here.</p>
           {error && <p className="notice" role="alert">{error}</p>}
           {!customer ? <Link className="primary wide" href="/account?next=/cart">Sign in to order</Link>
-            : profileMissing ? <Link className="primary wide" href="/account">Add business name and phone</Link>
+            : profileMissing ? <Link className="primary wide" href="/account?next=/cart">Add business name and phone</Link>
             : verifyError ? <button className="secondary wide" type="button" onClick={() => setRetry(n => n + 1)}>Retry email verification check</button>
             : verification?.id !== customer.id ? <p className="dim" role="status">Checking email verification…</p>
             : !emailVerified ? <><p className="dim">Verify {customer.email} before placing your order.</p><Link className="primary wide" href="/verify-email">Verify email</Link></>

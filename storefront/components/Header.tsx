@@ -10,6 +10,12 @@ const NAV = [
   { href: "/account", label: "Account", icon: "user" },
 ]
 
+/** Two letters for the signed-in business: "Golden Wok" → "GW", "chef@x.com" → "CH". */
+function initials(name: string) {
+  const words = name.replace(/@.*/, "").split(/[\s._-]+/).filter(Boolean)
+  return ((words.length > 1 ? words[0][0] + words[1][0] : (words[0] || "?").slice(0, 2))).toUpperCase()
+}
+
 export function Header() {
   const { count, query, setQuery, customer, ready } = useStore()
   const path = usePathname()
@@ -27,11 +33,13 @@ export function Header() {
         </label>
         <nav className="cj-nav" aria-label="Main navigation">
           {NAV.map((n) => (
-            <Link key={n.href} href={n.href} className={active(n.href) ? "active" : ""} aria-current={active(n.href) ? "page" : undefined}>
-              {n.icon && <Icon n={n.icon} size={17} />}
-              {n.href === "/account"
-                ? <span className="acctname">{!ready ? n.label : customer ? (customer.company_name || customer.first_name || n.label) : "Sign in"}</span>
-                : <span>{n.label}</span>}
+            <Link key={n.href} href={n.href} className={[active(n.href) ? "active" : "", n.href === "/account" && customer ? "signedin" : ""].join(" ").trim()} aria-current={active(n.href) ? "page" : undefined}
+              aria-label={n.href === "/account" && customer ? `Account: signed in as ${customer.company_name || customer.email}` : undefined}>
+              {n.href === "/account" && ready && customer
+                ? <><span className="avatar" aria-hidden="true">{customer.company_name || customer.first_name ? initials(customer.company_name || customer.first_name || "") : <Icon n="user" size={14} />}</span>
+                    <span className="acctname" title={`Signed in as ${customer.company_name || customer.email}`}>{customer.company_name || customer.first_name || "My account"}</span></>
+                : <>{n.icon && <Icon n={n.icon} size={17} />}
+                    <span className={n.href === "/account" ? "acctname" : undefined}>{n.href === "/account" && ready ? "Sign in" : n.label}</span></>}
             </Link>
           ))}
           <Link href="/cart" className={`cartnav${active("/cart") ? " active" : ""}`} aria-current={active("/cart") ? "page" : undefined} aria-label={`Cart, ${count} items`}>

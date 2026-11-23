@@ -40,3 +40,12 @@ html{scrollbar-gutter:stable}
 @media (prefers-reduced-motion:reduce){.product.skeleton{animation:none}}
 /* Signed-in business name in the top bar. */
 .cj-nav .acctname{max-width:150px;overflow:hidden;text-overflow:ellipsis}
+/* Signed-in account: initials avatar in the top bar and the account page header. */
+.cj-nav .avatar,.signedas .avatar{display:inline-grid;place-items:center;flex:none;width:24px;height:24px;border-radius:999px;background:var(--accent);color:#fff;font-size:10px;font-weight:800;letter-spacing:.3px}
+.cj-nav .signedin{background:#fff;box-shadow:0 0 0 1px var(--edge);color:var(--ink);padding-left:5px}
+.cj-nav .signedin:hover,.cj-nav .signedin.active{background:var(--mint);color:var(--accent)}
+.signedas{display:flex;align-items:center;gap:16px;margin:0 0 22px}
+.signedas .avatar.lg{width:56px;height:56px;font-size:19px}
+.signedas h1{font-family:Georgia,serif;font-weight:500;letter-spacing:-.04em;font-size:clamp(30px,4cqw,44px);line-height:1.05;margin:4px 0 2px;overflow-wrap:anywhere}
+.signedas+.callout{margin:0 0 18px}
+.surface label>small.hint{display:block;margin-top:5px;color:var(--sub);font-weight:400}
